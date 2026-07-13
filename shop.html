@@ -1,0 +1,3625 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>化石対戦 - ショップ</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body {
+    background:#1a1410; color:#e9dfce; min-height:100dvh;
+    font-family:'Courier New', monospace;
+    display:flex; justify-content:center;
+  }
+  #wrap {
+    width:100%; max-width:420px; min-height:100dvh;
+    display:flex; flex-direction:column;
+    background:radial-gradient(ellipse at 50% 0%, #241d14 0%, #1a1410 60%);
+  }
+
+  /* ---------- ヘッダー ---------- */
+  header {
+    padding:14px 16px 10px;
+    border-bottom:2px solid #3a3026;
+    display:flex; justify-content:space-between; align-items:center;
+    position:sticky; top:0; z-index:20;
+    background:#1a1410;
+  }
+  #back-btn {
+    background:none; border:none; color:#8a7c64; font-size:12px;
+    font-family:inherit; cursor:pointer; padding:4px 0;
+  }
+  header h1 { font-size:16px; color:#f0d080; letter-spacing:3px; }
+
+  #wallet-strip {
+    display:flex; gap:8px; padding:10px 16px 12px;
+    border-bottom:1px solid #2a241c;
+  }
+
+  #spent-yen-bar {
+    margin:0 16px 10px; padding:7px 12px; border-radius:8px;
+    background:#2a1810; border:1px dashed #6a3a2a;
+    font-size:10.5px; color:#e0a888; text-align:center;
+  }
+  #spent-yen-bar b { color:#ffb870; font-size:12px; }
+  .wallet-box {
+    flex:1; display:flex; align-items:center; gap:8px;
+    background:#221e18; border:1px solid #3a3026; border-radius:10px;
+    padding:8px 10px;
+  }
+  .wallet-icon { font-size:20px; }
+  .wallet-label { font-size:9px; color:#8a7c64; letter-spacing:1px; }
+  .wallet-val { font-size:15px; font-weight:bold; }
+  #wallet-gem .wallet-val { color:#7fe3ff; text-shadow:0 0 8px rgba(127,227,255,0.4); }
+  #wallet-gold .wallet-val { color:#ffd23a; }
+
+  /* ---------- タブ ---------- */
+  #tab-bar {
+    display:flex; overflow-x:auto; gap:6px;
+    padding:10px 16px; border-bottom:1px solid #2a241c;
+  }
+  .tab-btn {
+    flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:2px;
+    padding:7px 12px; border-radius:12px;
+    border:1px solid #4a3e2a; background:#221e18; color:#8a7c64;
+    font-family:inherit; font-size:10px; letter-spacing:1px; cursor:pointer;
+  }
+  .tab-btn .ti { font-size:16px; }
+  .tab-btn.active { background:linear-gradient(180deg,#5a4310,#3a2a08); border-color:#d4a843; color:#f0d080; }
+
+  #body { flex:1; padding:14px 16px 100px; }
+  .tab-pane { display:none; }
+  .tab-pane.show { display:block; animation:fadein .15s ease; }
+  @keyframes fadein { from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:none;} }
+
+  .pane-lead {
+    font-size:11px; color:#a8916a; line-height:1.6; margin-bottom:14px;
+    background:#221e18; border:1px solid #2e281f; border-radius:8px; padding:10px 12px;
+  }
+  .pane-lead b { color:#f0d080; }
+
+  /* ---------- 商品カードグリッド ---------- */
+  .shop-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .shop-grid.single { grid-template-columns:1fr; }
+
+  .shop-card {
+    position:relative; background:#221e18; border:1px solid #3a3026; border-radius:14px;
+    overflow:hidden; display:flex; flex-direction:column;
+    transition:transform .08s;
+  }
+  .shop-card:active { transform:scale(0.97); }
+  .shop-card.disabled { opacity:0.42; }
+
+  .card-badge {
+    position:absolute; top:6px; left:6px; z-index:3;
+    font-size:9px; font-weight:bold; letter-spacing:0.5px;
+    padding:2px 7px; border-radius:20px; color:#1a1410;
+  }
+  .badge-bonus { background:#ffd700; }
+  .badge-hot   { background:linear-gradient(90deg,#ff6a6a,#ff9a4a); color:#1a1410; }
+  .badge-limit { background:#7fe3ff; }
+  .badge-best  { background:linear-gradient(90deg,#b478ff,#ff5fd1); color:#fff; }
+
+  .card-visual {
+    height:78px; display:flex; align-items:center; justify-content:center;
+    font-size:34px; position:relative;
+  }
+  .card-visual::after {
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at 50% 30%, rgba(255,255,255,0.10), transparent 65%);
+  }
+  .cv-gem   { background:linear-gradient(160deg,#1c3a4a,#122633); }
+  .cv-rock  { background:linear-gradient(160deg,#3a2e1c,#241a10); }
+  .cv-gold  { background:linear-gradient(160deg,#4a3a12,#2a2008); }
+  .cv-stam  { background:linear-gradient(160deg,#1c3a24,#122616); }
+  .cv-pass  { background:linear-gradient(160deg,#3a1c4a,#241033); }
+
+  .card-body { padding:9px 10px 10px; display:flex; flex-direction:column; gap:4px; flex:1; }
+  .card-title { font-size:12px; font-weight:bold; color:#f0d080; letter-spacing:0.5px; }
+  .card-desc { font-size:9.5px; color:#8a7c64; line-height:1.5; flex:1; }
+  .card-desc b { color:#c8b89a; }
+  .card-limit-note { font-size:9px; color:#7fe3ff; }
+
+  .card-price-row {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-top:6px; gap:6px;
+  }
+  .card-price { font-size:12px; font-weight:bold; color:#e9dfce; white-space:nowrap; }
+  .card-price .yen { color:#a0e880; }
+  .card-price .gem-cost { color:#7fe3ff; }
+  .buy-btn {
+    padding:6px 12px; border-radius:8px; border:none; cursor:pointer;
+    font-family:inherit; font-size:10.5px; font-weight:bold; letter-spacing:1px;
+    background:linear-gradient(180deg,#d4a843,#a07820); color:#1a1410;
+    white-space:nowrap;
+  }
+  .buy-btn.gem-btn { background:linear-gradient(180deg,#4dc8ff,#2a86c8); color:#0c1a22; }
+  .buy-btn.pass-btn { background:linear-gradient(180deg,#c896ff,#8c50e0); color:#1e0c33; }
+  .buy-btn:disabled { background:#3a3a3a; color:#777; cursor:not-allowed; }
+
+  /* ---------- 岩セット：属性選択 ---------- */
+  .elem-picker {
+    display:flex; gap:5px; margin-top:6px; flex-wrap:wrap;
+  }
+  .elem-chip {
+    flex:1 0 auto; padding:4px 0; text-align:center; border-radius:6px;
+    border:1px solid #3a3026; background:#1a1612; color:#c8b89a;
+    font-size:13px; cursor:pointer; min-width:30px;
+  }
+  .elem-chip.active { border-color:#f0d080; background:#3a2e14; }
+
+  /* ---------- スタミナ回復 ---------- */
+  .stam-hold {
+    display:flex; align-items:center; justify-content:space-between;
+    background:#221e18; border:1px solid #3a3026; border-radius:10px;
+    padding:10px 12px; margin-bottom:12px;
+  }
+  .stam-hold .sh-label { font-size:11px; color:#8a7c64; }
+  .stam-hold .sh-val { font-size:18px; font-weight:bold; color:#a0e880; }
+  .stam-hold button {
+    padding:8px 14px; border-radius:8px; border:none; cursor:pointer;
+    background:linear-gradient(180deg,#5ad478,#2a9048); color:#0c2010;
+    font-family:inherit; font-size:11px; font-weight:bold;
+  }
+  .stam-hold button:disabled { background:#3a3a3a; color:#777; cursor:not-allowed; }
+
+  .ad-card {
+    display:flex; align-items:center; gap:10px;
+    background:#1c2418; border:1px solid #2e3a26; border-radius:12px;
+    padding:10px 12px; margin-top:12px;
+  }
+  .ad-card .ai { font-size:24px; }
+  .ad-card .at { flex:1; font-size:11px; color:#c8b89a; line-height:1.5; }
+  .ad-card .at b { color:#a0e880; }
+  .ad-card button {
+    padding:8px 12px; border-radius:8px; border:none; cursor:pointer;
+    background:linear-gradient(180deg,#88e0a8,#4aa868); color:#0c2010;
+    font-family:inherit; font-size:10.5px; font-weight:bold; white-space:nowrap;
+  }
+  .ad-card button:disabled { background:#3a3a3a; color:#777; cursor:not-allowed; }
+
+  /* ---------- 月額パス ---------- */
+  .pass-hero {
+    background:linear-gradient(150deg,#2e1c42,#1c1226);
+    border:1px solid #6a3ea0; border-radius:16px;
+    padding:18px 16px; text-align:center; position:relative; overflow:hidden;
+  }
+  .pass-hero::before {
+    content:'👑'; position:absolute; top:-10px; right:-6px; font-size:70px; opacity:0.12;
+  }
+  .pass-hero .pt { font-size:15px; font-weight:bold; color:#e8c8ff; letter-spacing:2px; }
+  .pass-hero .pp { font-size:22px; font-weight:bold; color:#fff; margin-top:6px; }
+  .pass-hero .pp span { font-size:11px; color:#c8a8e8; font-weight:normal; }
+
+  .pass-benefits { margin-top:14px; display:flex; flex-direction:column; gap:8px; }
+  .pass-benefit-row {
+    display:flex; align-items:center; gap:10px;
+    background:#221830; border:1px solid #3a2a52; border-radius:10px; padding:8px 10px;
+  }
+  .pass-benefit-row .bi { font-size:18px; }
+  .pass-benefit-row .bt { font-size:11px; color:#e9dfce; }
+  .pass-benefit-row .bt b { color:#e8c8ff; }
+
+  #pass-cta { width:100%; margin-top:14px; padding:12px; border-radius:10px; border:none;
+    background:linear-gradient(180deg,#c896ff,#8c50e0); color:#1e0c33;
+    font-family:inherit; font-size:13px; font-weight:bold; letter-spacing:2px; cursor:pointer; }
+  #pass-cta:disabled { background:#3a3a3a; color:#999; cursor:not-allowed; }
+
+  #pass-status { margin-top:10px; text-align:center; font-size:11px; color:#a8916a; line-height:1.7; }
+  #pass-status b { color:#e8c8ff; }
+
+  .disclaimer {
+    margin-top:18px; font-size:9px; color:#5a5040; line-height:1.7;
+    border-top:1px dashed #3a3026; padding-top:10px;
+  }
+
+  /* ---------- トースト ---------- */
+  #toast {
+    position:fixed; left:50%; bottom:22px; transform:translateX(-50%) translateY(20px);
+    max-width:380px; width:calc(100% - 40px);
+    background:#2a2418; border:1px solid #d4a843; border-radius:10px;
+    padding:12px 16px; font-size:12px; color:#f0d080; text-align:center;
+    opacity:0; pointer-events:none; transition:all .25s ease; z-index:50;
+    box-shadow:0 6px 20px rgba(0,0,0,0.5);
+  }
+  #toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  /* ---------- 確認モーダル ---------- */
+  #confirm-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.65);
+    display:none; align-items:center; justify-content:center; z-index:60;
+  }
+  #confirm-overlay.show { display:flex; }
+  #confirm-box {
+    width:calc(100% - 64px); max-width:320px;
+    background:#221e18; border:1px solid #4a3e2a; border-radius:14px;
+    padding:20px 18px;
+  }
+  #confirm-title { font-size:14px; color:#f0d080; font-weight:bold; margin-bottom:8px; }
+  #confirm-msg { font-size:12px; color:#c8b89a; line-height:1.7; margin-bottom:16px; }
+  #confirm-buttons { display:flex; gap:8px; }
+  #confirm-buttons button {
+    flex:1; padding:10px; border-radius:8px; border:none; cursor:pointer;
+    font-family:inherit; font-size:12px; font-weight:bold;
+  }
+  #confirm-cancel { background:#3a3026; color:#c8b89a; }
+  #confirm-ok { background:linear-gradient(180deg,#d4a843,#a07820); color:#1a1410; }
+
+  /* ---------- 詳細情報モーダル ---------- */
+  .info-btn {
+    position:absolute; top:6px; right:6px; z-index:3;
+    width:20px; height:20px; border-radius:50%;
+    background:rgba(0,0,0,0.45); border:1px solid rgba(255,255,255,0.25);
+    color:#e9dfce; font-size:11px; font-weight:bold;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  #detail-overlay {
+    position:fixed; inset:0; background:rgba(0,0,0,0.7);
+    display:none; align-items:center; justify-content:center; z-index:65;
+  }
+  #detail-overlay.show { display:flex; }
+  #detail-box {
+    width:calc(100% - 56px); max-width:340px; max-height:78vh; overflow-y:auto;
+    background:#1e1a14; border:1px solid #4a3e2a; border-radius:14px;
+    padding:18px 16px;
+  }
+  #detail-title { font-size:14px; color:#f0d080; font-weight:bold; margin-bottom:10px; letter-spacing:1px; }
+  #detail-body { font-size:12px; color:#c8b89a; line-height:1.8; }
+  #detail-body .dt-row { margin-bottom:10px; padding-bottom:10px; border-bottom:1px dashed #3a3026; }
+  #detail-body .dt-row:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+  #detail-body .dt-label { font-size:10px; color:#8a7c64; letter-spacing:1px; margin-bottom:3px; }
+  #detail-body b { color:#f0d080; }
+  #detail-body .warn { color:#ff9a6a; }
+  #detail-close {
+    width:100%; margin-top:14px; padding:10px; border-radius:8px; border:none;
+    background:#3a3026; color:#e9dfce; font-family:inherit; font-size:12px; font-weight:bold; cursor:pointer;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+
+  <header>
+    <button id="back-btn" onclick="location.href='index.html'">◀ 戻る</button>
+    <h1>💎 ショップ</h1>
+    <span style="width:38px;"></span>
+  </header>
+
+  <div id="wallet-strip">
+    <div class="wallet-box" id="wallet-gem">
+      <span class="wallet-icon">💎</span>
+      <div><div class="wallet-label">ジェム</div><div class="wallet-val" id="gem-val">0</div></div>
+    </div>
+    <div class="wallet-box" id="wallet-gold">
+      <span class="wallet-icon">💰</span>
+      <div><div class="wallet-label">ゴールド</div><div class="wallet-val" id="gold-val">0</div></div>
+    </div>
+  </div>
+
+  <div id="spent-yen-bar">🧪 テストプレイ用：累計課金額 <b id="spent-yen-val">0</b>円</div>
+
+  <div id="tab-bar">
+    <button class="tab-btn active" data-tab="gem"><span class="ti">💎</span>ジェム購入</button>
+    <button class="tab-btn" data-tab="rock"><span class="ti">🪨</span>岩セット</button>
+    <button class="tab-btn" data-tab="goldpack"><span class="ti">💰</span>ゴールド</button>
+    <button class="tab-btn" data-tab="stamina"><span class="ti">⚡</span>回復</button>
+    <button class="tab-btn" data-tab="pass"><span class="ti">👑</span>月額パス</button>
+  </div>
+
+  <div id="body">
+
+    <!-- ジェム購入 -->
+    <div class="tab-pane show" id="pane-gem">
+      <div class="pane-lead">課金通貨<b>ジェム</b>を購入する。岩セット・ゴールドパック・スタミナ回復と交換できる、このゲームの共通チケット。</div>
+      <div class="shop-grid" id="grid-gem"></div>
+    </div>
+
+    <!-- 岩セット -->
+    <div class="tab-pane" id="pane-rock">
+      <div class="pane-lead">ジェムを使って<b>岩</b>と交換する。「厳選」は1〜4個のステータスに個性1.5倍がかかる激レア個体（通常1%）の判定を確定入手できるプレミアム枠。確率保証枠と合わせて<b>3回まで</b>購入できる目玉商品。各カードの<b>ⓘ</b>で詳細を確認できます。</div>
+      <div class="shop-grid" id="grid-rock"></div>
+    </div>
+
+    <!-- ゴールドパック -->
+    <div class="tab-pane" id="pane-goldpack">
+      <div class="pane-lead">Lv50〜Lv100帯のゴールド不足を一気に解消するパック。岩ダンジョン周回換算の目安つき。</div>
+      <div class="shop-grid single" id="grid-goldpack"></div>
+    </div>
+
+    <!-- スタミナ回復 -->
+    <div class="tab-pane" id="pane-stamina">
+      <div class="stam-hold">
+        <div><div class="sh-label">所持チケット</div><div class="sh-val"><span id="ticket-count">0</span>枚</div></div>
+        <button id="use-ticket-btn" onclick="useTicket()">1枚使って全回復</button>
+      </div>
+      <div class="shop-grid" id="grid-stamina"></div>
+      <div class="ad-card">
+        <span class="ai">📺</span>
+        <div class="at">広告視聴で<b>+30</b>回復（<span id="ad-remain">3</span>/3 残り・無料）</div>
+        <button id="ad-btn" onclick="watchAd()">視聴する</button>
+      </div>
+    </div>
+
+    <!-- 月額パス -->
+    <div class="tab-pane" id="pane-pass">
+      <div class="pass-hero">
+        <div class="pt">化石対戦 月額パス</div>
+        <div class="pp">480円<span> / 月</span></div>
+      </div>
+      <div class="pass-benefits">
+        <div class="pass-benefit-row"><span class="bi">⚡</span><span class="bt">スタミナ回復チケット <b>×1</b> 毎日</span></div>
+        <div class="pass-benefit-row"><span class="bi">💎</span><span class="bt">ジェム <b>×10</b> 毎日</span></div>
+        <div class="pass-benefit-row"><span class="bi">💰</span><span class="bt">ゴールド <b>×3,000G</b> 毎日</span></div>
+      </div>
+      <button id="pass-cta" onclick="onPassCta()">加入する</button>
+      <div id="pass-status"></div>
+    </div>
+
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="confirm-overlay">
+    <div id="confirm-box">
+      <div id="confirm-title">購入確認</div>
+      <div id="confirm-msg"></div>
+      <div id="confirm-buttons">
+        <button id="confirm-cancel">キャンセル</button>
+        <button id="confirm-ok">購入する</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="detail-overlay">
+    <div id="detail-box">
+      <div id="detail-title"></div>
+      <div id="detail-body"></div>
+      <button id="detail-close">とじる</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/**
+ * game-data.js
+ * カセキハンター - 共通データ・セーブ管理レイヤー
+ *
+ * fossil-dig.html / formation.html / auto-battle.html / strengthen.html / title.html
+ * すべてから game-data.js を読み込んで使う想定。
+ * ブラウザのlocalStorageにセーブデータを保存する（13章の将来計画：まずはlocalStorageで永続化）。
+ */
+(function (global) {
+  'use strict';
+
+  // ============================================================
+  // 定数
+  // ============================================================
+  const TYPE_CHART = {
+    wind: { strong: 'earth', weak: 'fire' },
+    earth: { strong: 'thunder', weak: 'wind' },
+    thunder: { strong: 'water', weak: 'earth' },
+    water: { strong: 'fire', weak: 'thunder' },
+    fire: { strong: 'wind', weak: 'water' },
+  };
+  const ELEM_ICONS = { fire: '🔥', water: '💧', earth: '🪨', thunder: '⚡', wind: '🌬️' };
+  const ELEM_COLORS = { fire: '#ff8844', water: '#4dc8ff', earth: '#c89858', thunder: '#f0d840', wind: '#88e0a8' };
+  const ELEM_LABEL = { fire: '火', water: '水', earth: '土', thunder: '雷', wind: '風' };
+  const RARITY_MUL = { common: 1.0, rare: 1.25, epic: 1.5, mythic: 1.75, title: 2.0 };
+  const RARITY_LABEL = { common: 'COMMON', rare: 'RARE', epic: 'EPIC', mythic: 'MYTHIC', title: '称号' };
+  const RARITY_COLOR = { common: '#e8e4da', rare: '#4dc8ff', epic: '#b478ff', mythic: '#ff5fd1', title: '#ffd700' };
+  const DIG_GRADE_MUL = { S: 1.1, A: 1.0, B: 0.9, C: 0.8, D: 0.7 };
+  // 威力段階：基準威力(中=250)に対する倍率。極大は称号(TITLE)キャラ専用の最上位段階
+  const POWER_BASE = 250;
+  const TIER_MULTIPLIER = { 小: 0.7, 中: 1.0, 大: 1.3, 特大: 1.7, 極大: 2.5 };
+  const TIER_POWER = Object.fromEntries(
+    Object.entries(TIER_MULTIPLIER).map(([k, v]) => [k, Math.round(POWER_BASE * v)])
+  );
+  // 対象数減衰：単体1.0倍／複数体(2〜4体)0.5倍／全体0.45倍
+  const TARGET_COUNT_MULTIPLIER = { 1: 1.0, 2: 0.5, 3: 0.5, 4: 0.5, all: 0.45 };
+  function getTargetMultiplier(targets) {
+    return TARGET_COUNT_MULTIPLIER[targets] || 1.0;
+  }
+  const TITLE_DUNGEON_HP_MUL = { 1: 2, 2: 3, 3: 4, 4: 6, 5: 8 };
+
+  const INDIVIDUALITY_TABLE = [
+    { v: 1.0, w: 55 }, { v: 1.1, w: 18 }, { v: 1.2, w: 12 },
+    { v: 1.3, w: 8 }, { v: 1.4, w: 4 }, { v: 1.5, w: 3 },
+  ];
+  function rollOneStat() {
+    const r = Math.random() * 100;
+    let acc = 0;
+    for (const e of INDIVIDUALITY_TABLE) { acc += e.w; if (r < acc) return e.v; }
+    return 1.0;
+  }
+  // 「厳選当たり」発生時、1.5倍になるステータスの個数（1〜4）の抽選テーブル
+  const PERFECT_COUNT_TABLE = [
+    { n: 1, w: 50 }, { n: 2, w: 30 }, { n: 3, w: 15 }, { n: 4, w: 5 },
+  ];
+  function rollPerfectStatCount() {
+    const r = Math.random() * 100;
+    let acc = 0;
+    for (const e of PERFECT_COUNT_TABLE) { acc += e.w; if (r < acc) return e.n; }
+    return 1;
+  }
+  function rollIndividuality(forcePerfect) {
+    if (forcePerfect || Math.random() < 0.01) {
+      // 「厳選当たり個体」：1〜4個のステータスが1.5倍で確定（50/30/15/5%）。残りのステータスは通常抽選。
+      const n = rollPerfectStatCount();
+      const keys = ['hp', 'atk', 'def', 'spd'];
+      const shuffled = keys.slice().sort(() => Math.random() - 0.5);
+      const boosted = new Set(shuffled.slice(0, n));
+      const result = { perfect: true, perfectCount: n };
+      keys.forEach((k) => { result[k] = boosted.has(k) ? 1.5 : rollOneStat(); });
+      return result;
+    }
+    return { hp: rollOneStat(), atk: rollOneStat(), def: rollOneStat(), spd: rollOneStat(), perfect: false, perfectCount: 0 };
+  }
+
+  function getTypeMultiplier(atkEl, defEl, atkRarity, defRarity) {
+    // 称号(TITLE)キャラは弱点を持たない特別枠：
+    // ・称号キャラが攻撃する時は相手が誰であれ常に1.3倍（称号同士でも1.3倍）
+    // ・称号キャラ以外から称号キャラを攻撃する時は常に0.85倍（弱点が刺さらない代わりに軽減もある）
+    if (atkRarity === 'title') return 1.3;
+    if (defRarity === 'title') return 0.85;
+    if (!atkEl || atkEl === 'none') return 1.0;
+    const c = TYPE_CHART[atkEl];
+    if (!c) return 1.0;
+    if (c.strong === defEl) return 2.0;
+    if (c.weak === defEl) return 0.5;
+    return 1.0;
+  }
+
+  // ============================================================
+  // キャラクターマスターデータ（20体＋称号5体）
+  // ============================================================
+  const CHARACTER_MASTER = 
+[
+  {
+    "id": "fire01",
+    "name": "イグニス",
+    "element": "fire",
+    "rarity": "common",
+    "motif": "小型の炎竜。素早く動き回り牙で攻撃する",
+    "personality": "やんちゃで落ち着きがない",
+    "baseStats": {
+      "hp": 1600,
+      "atk": 85,
+      "def": 50,
+      "spd": 95,
+      "sp": 85
+    },
+    "skills": [
+      {
+        "name": "火竜の一嚙み",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "火の粉散らし",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 0.3
+          }
+        ]
+      }
+    ],
+    "image": "images/1.png"
+  },
+  {
+    "id": "fire02",
+    "name": "ゾルバ",
+    "element": "fire",
+    "rarity": "common",
+    "motif": "溶岩の甲羅を持つ亀型モンスター。防御に徹する",
+    "personality": "のんびり屋、動じない",
+    "baseStats": {
+      "hp": 2300,
+      "atk": 55,
+      "def": 95,
+      "spd": 55,
+      "sp": 75
+    },
+    "skills": [
+      {
+        "name": "灼熱の甲羅噴き",
+        "sp": 25,
+        "targets": 3,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "硬甲収縮",
+        "sp": 20,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "def",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/2.png"
+  },
+  {
+    "id": "fire03",
+    "name": "カグツヴォルフ",
+    "element": "fire",
+    "rarity": "rare",
+    "motif": "三つ目の紫炎狼。単独で獲物を追う",
+    "personality": "気性が荒い、好戦的",
+    "baseStats": {
+      "hp": 1850,
+      "atk": 140,
+      "def": 60,
+      "spd": 80,
+      "sp": 100
+    },
+    "skills": [
+      {
+        "name": "紫炎の一閃",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "焦がし爪",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "猛者の咆哮",
+        "sp": 20,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "atk",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/3.png"
+  },
+  {
+    "id": "fire04",
+    "name": "インフェルニオ",
+    "element": "fire",
+    "rarity": "epic",
+    "motif": "宝物庫を守るルーン纏った黄金竜",
+    "personality": "誇り高く、財と誓いを重んじる",
+    "baseStats": {
+      "hp": 2050,
+      "atk": 125,
+      "def": 65,
+      "spd": 90,
+      "sp": 125
+    },
+    "skills": [
+      {
+        "name": "黄金の裁断",
+        "sp": 40,
+        "targets": 1,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "紅蓮の乱舞",
+        "sp": 35,
+        "targets": 3,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "業炎波動",
+        "sp": 40,
+        "targets": 4,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "秘宝の焔印",
+        "sp": 25,
+        "targets": 2,
+        "tier": null,
+        "effects": [
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 1.0
+          }
+        ]
+      }
+    ],
+    "image": "images/4.png"
+  },
+  {
+    "id": "fire05",
+    "name": "朱雀",
+    "element": "fire",
+    "rarity": "mythic",
+    "motif": "不死鳥の神話生物。己を燃やして蘇る伝説を持つ",
+    "personality": "気高く超然としている",
+    "baseStats": {
+      "hp": 2050,
+      "atk": 125,
+      "def": 65,
+      "spd": 90,
+      "sp": 125
+    },
+    "skills": [
+      {
+        "name": "不死鳥の断罪",
+        "sp": 60,
+        "targets": 1,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 1.0
+          }
+        ]
+      },
+      {
+        "name": "紅蓮双撃",
+        "sp": 50,
+        "targets": 2,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "天焔の羽ばたき",
+        "sp": 45,
+        "targets": "all",
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "burn",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "天啓の采配",
+        "sp": 50,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "atk",
+            "stages": 1,
+            "chance": 1,
+            "count": 2
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "atk",
+            "stages": -1,
+            "chance": 1,
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "image": "images/5.png"
+  },
+  {
+    "id": "water01",
+    "name": "ケロン",
+    "element": "water",
+    "rarity": "common",
+    "motif": "水辺を跳ね回る俊敏なカエル型モンスター",
+    "personality": "陽気でひょうきん",
+    "baseStats": {
+      "hp": 1650,
+      "atk": 75,
+      "def": 55,
+      "spd": 90,
+      "sp": 85
+    },
+    "skills": [
+      {
+        "name": "水弾撃ち",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "飛沫弾き",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/6.png"
+  },
+  {
+    "id": "water02",
+    "name": "ガンロック",
+    "element": "water",
+    "rarity": "common",
+    "motif": "岩のような鎧を纏った深海魚",
+    "personality": "寡黙で忍耐強い",
+    "baseStats": {
+      "hp": 2350,
+      "atk": 55,
+      "def": 90,
+      "spd": 50,
+      "sp": 70
+    },
+    "skills": [
+      {
+        "name": "鱗爆ぜ",
+        "sp": 25,
+        "targets": 3,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "侵食の飛沫",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      }
+    ],
+    "image": "images/7.png"
+  },
+  {
+    "id": "water03",
+    "name": "ラゼル",
+    "element": "water",
+    "rarity": "rare",
+    "motif": "傷だらけの巨大な鮫。荒波を切り裂き狩る",
+    "personality": "獰猛で執念深い",
+    "baseStats": {
+      "hp": 1900,
+      "atk": 150,
+      "def": 55,
+      "spd": 75,
+      "sp": 100
+    },
+    "skills": [
+      {
+        "name": "深傷の一噛み",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "血潮の渦",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "三方散水",
+        "sp": 25,
+        "targets": 3,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/8.png"
+  },
+  {
+    "id": "water04",
+    "name": "アズライン",
+    "element": "water",
+    "rarity": "epic",
+    "motif": "発光する鱗を持つ東洋風の青竜",
+    "personality": "静かで思慮深い",
+    "baseStats": {
+      "hp": 2100,
+      "atk": 130,
+      "def": 68,
+      "spd": 85,
+      "sp": 125
+    },
+    "skills": [
+      {
+        "name": "蒼龍の一撃",
+        "sp": 40,
+        "targets": 1,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "濁流侵蝕",
+        "sp": 35,
+        "targets": 2,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "三連波動",
+        "sp": 40,
+        "targets": 3,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "飛沫乱舞",
+        "sp": 30,
+        "targets": 4,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/9.png"
+  },
+  {
+    "id": "water05",
+    "name": "リヴァイアサン",
+    "element": "water",
+    "rarity": "mythic",
+    "motif": "宝石とルーンを纏った黄金の海竜。海そのものを支配する",
+    "personality": "悠然として底知れない",
+    "baseStats": {
+      "hp": 2100,
+      "atk": 130,
+      "def": 68,
+      "spd": 85,
+      "sp": 125
+    },
+    "skills": [
+      {
+        "name": "深淵の断罪",
+        "sp": 60,
+        "targets": 1,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 1.0
+          }
+        ]
+      },
+      {
+        "name": "大海の裂波",
+        "sp": 55,
+        "targets": 3,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "蒼海の咆哮",
+        "sp": 50,
+        "targets": "all",
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "侵食の呪波",
+        "sp": 45,
+        "targets": 3,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "def",
+            "stages": -1,
+            "chance": 1.0,
+            "count": 3
+          }
+        ]
+      }
+    ],
+    "image": "images/10.png"
+  },
+  {
+    "id": "earth01",
+    "name": "モール",
+    "element": "earth",
+    "rarity": "common",
+    "motif": "穿つ爪を持つ針鼠型モンスター。地中を掘り進む",
+    "personality": "働き者で几帳面",
+    "baseStats": {
+      "hp": 1700,
+      "atk": 80,
+      "def": 60,
+      "spd": 88,
+      "sp": 85
+    },
+    "skills": [
+      {
+        "name": "穿岩突き",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "def",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      },
+      {
+        "name": "土礫弾き",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/11.png"
+  },
+  {
+    "id": "earth02",
+    "name": "ロックシェル",
+    "element": "earth",
+    "rarity": "common",
+    "motif": "結晶を纏った岩の亀。ゆっくりと大地を歩む",
+    "personality": "穏やかで頑固",
+    "baseStats": {
+      "hp": 2500,
+      "atk": 55,
+      "def": 100,
+      "spd": 45,
+      "sp": 70
+    },
+    "skills": [
+      {
+        "name": "甲殻散弾",
+        "sp": 25,
+        "targets": 3,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "甲羅堅め",
+        "sp": 20,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "def",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/12.png"
+  },
+  {
+    "id": "earth03",
+    "name": "ゴーレックス",
+    "element": "earth",
+    "rarity": "rare",
+    "motif": "土塊が寄り集まって生まれたゴーレム",
+    "personality": "無口で忠実",
+    "baseStats": {
+      "hp": 2000,
+      "atk": 145,
+      "def": 70,
+      "spd": 65,
+      "sp": 95
+    },
+    "skills": [
+      {
+        "name": "岩塊拳",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "石片乱打",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "大地の加護",
+        "sp": 20,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "def",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/13.png"
+  },
+  {
+    "id": "earth04",
+    "name": "クリスタロン",
+    "element": "earth",
+    "rarity": "epic",
+    "motif": "紫水晶を纏った巨大なゴーレム",
+    "personality": "神秘的で寡黙",
+    "baseStats": {
+      "hp": 2400,
+      "atk": 125,
+      "def": 80,
+      "spd": 70,
+      "sp": 120
+    },
+    "skills": [
+      {
+        "name": "結晶粉砕撃",
+        "sp": 40,
+        "targets": 1,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "双晶乱打",
+        "sp": 35,
+        "targets": 2,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "散晶弾",
+        "sp": 40,
+        "targets": 3,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "守晶の号令",
+        "sp": 30,
+        "targets": 4,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "def",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/14.png"
+  },
+  {
+    "id": "earth05",
+    "name": "ベヒモス",
+    "element": "earth",
+    "rarity": "mythic",
+    "motif": "岩の巨躯を持つ伝説のサイ。大地そのものの化身",
+    "personality": "不動、王者の風格",
+    "baseStats": {
+      "hp": 2400,
+      "atk": 125,
+      "def": 80,
+      "spd": 70,
+      "sp": 120
+    },
+    "skills": [
+      {
+        "name": "大地断裂撃",
+        "sp": 60,
+        "targets": 1,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "山塊三連撃",
+        "sp": 55,
+        "targets": 3,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "大地鳴動",
+        "sp": 50,
+        "targets": "all",
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "不動の守護陣",
+        "sp": 45,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "def",
+            "stages": 2,
+            "chance": 1,
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "image": "images/15.png"
+  },
+  {
+    "id": "thunder01",
+    "name": "プラズミー",
+    "element": "thunder",
+    "rarity": "common",
+    "motif": "帯電した小さな鼠型モンスター。すばしっこい",
+    "personality": "気が強く負けず嫌い",
+    "baseStats": {
+      "hp": 1500,
+      "atk": 85,
+      "def": 50,
+      "spd": 100,
+      "sp": 90
+    },
+    "skills": [
+      {
+        "name": "電牙一閃",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "火花散乱",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/16.png"
+  },
+  {
+    "id": "thunder02",
+    "name": "ボルトドン",
+    "element": "thunder",
+    "rarity": "common",
+    "motif": "機械的な鎧を纏った電気トカゲ",
+    "personality": "冷静沈着",
+    "baseStats": {
+      "hp": 2250,
+      "atk": 60,
+      "def": 92,
+      "spd": 58,
+      "sp": 75
+    },
+    "skills": [
+      {
+        "name": "帯電衝突",
+        "sp": 25,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "電位上昇",
+        "sp": 20,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "atk",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/17.png"
+  },
+  {
+    "id": "thunder03",
+    "name": "エレクトフェイ",
+    "element": "thunder",
+    "rarity": "rare",
+    "motif": "雷を纏う妖精の三体一組",
+    "personality": "いたずら好きで気まぐれ",
+    "baseStats": {
+      "hp": 1800,
+      "atk": 145,
+      "def": 58,
+      "spd": 90,
+      "sp": 105
+    },
+    "skills": [
+      {
+        "name": "妖精雷撃",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "帯電の悪戯",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "痺れの舞踏",
+        "sp": 25,
+        "targets": 2,
+        "tier": null,
+        "effects": [
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      }
+    ],
+    "image": "images/18.png"
+  },
+  {
+    "id": "thunder04",
+    "name": "ライゲイン",
+    "element": "thunder",
+    "rarity": "epic",
+    "motif": "紫電を纏う結晶の竜",
+    "personality": "誇り高く一撃を重んじる",
+    "baseStats": {
+      "hp": 2000,
+      "atk": 125,
+      "def": 62,
+      "spd": 98,
+      "sp": 125
+    },
+    "skills": [
+      {
+        "name": "紫電の一撃",
+        "sp": 40,
+        "targets": 1,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "双雷撃",
+        "sp": 35,
+        "targets": 2,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "散雷弾",
+        "sp": 30,
+        "targets": 3,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "過電圧解放",
+        "sp": 35,
+        "targets": 1,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "atk",
+            "stages": 1,
+            "chance": 1
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      }
+    ],
+    "image": "images/19.png"
+  },
+  {
+    "id": "thunder05",
+    "name": "雷神獣ライジン",
+    "element": "thunder",
+    "rarity": "mythic",
+    "motif": "武装を纏った巨大な雷竜。嵐そのものを従える",
+    "personality": "苛烈にして威厳がある",
+    "baseStats": {
+      "hp": 2000,
+      "atk": 125,
+      "def": 62,
+      "spd": 98,
+      "sp": 125
+    },
+    "skills": [
+      {
+        "name": "神雷の裁断",
+        "sp": 60,
+        "targets": 1,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 1.0
+          }
+        ]
+      },
+      {
+        "name": "三連神撃",
+        "sp": 55,
+        "targets": 3,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 0.3
+          }
+        ]
+      },
+      {
+        "name": "雷鳴轟破",
+        "sp": 50,
+        "targets": "all",
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "麻痺の号令",
+        "sp": 45,
+        "targets": 2,
+        "tier": null,
+        "effects": [
+          {
+            "type": "status",
+            "status": "paralysis",
+            "chance": 1.0
+          }
+        ]
+      }
+    ],
+    "image": "images/20.png"
+  },
+  {
+    "id": "wind01",
+    "name": "ウィンガル",
+    "element": "wind",
+    "rarity": "common",
+    "motif": "機械的な翼を持つ俊敏な鳥型モンスター",
+    "personality": "自由奔放",
+    "baseStats": {
+      "hp": 1550,
+      "atk": 75,
+      "def": 48,
+      "spd": 100,
+      "sp": 90
+    },
+    "skills": [
+      {
+        "name": "疾風の一撃",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "旋風散布",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/21.png"
+  },
+  {
+    "id": "wind02",
+    "name": "トルネビートル",
+    "element": "wind",
+    "rarity": "common",
+    "motif": "竜巻を纏う岩の甲虫",
+    "personality": "粘り強く一途",
+    "baseStats": {
+      "hp": 2200,
+      "atk": 55,
+      "def": 88,
+      "spd": 65,
+      "sp": 75
+    },
+    "skills": [
+      {
+        "name": "突風穿ち",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "砂塵弾き",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/22.png"
+  },
+  {
+    "id": "wind03",
+    "name": "ゲイルナイト",
+    "element": "wind",
+    "rarity": "rare",
+    "motif": "竜巻の衣を纏う戦士",
+    "personality": "高潔で仲間思い",
+    "baseStats": {
+      "hp": 1850,
+      "atk": 140,
+      "def": 55,
+      "spd": 95,
+      "sp": 105
+    },
+    "skills": [
+      {
+        "name": "一陣の斬撃",
+        "sp": 30,
+        "targets": 1,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      },
+      {
+        "name": "双風刃",
+        "sp": 20,
+        "targets": 2,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "追い風の号令",
+        "sp": 20,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/23.png"
+  },
+  {
+    "id": "wind04",
+    "name": "テンペスドラ",
+    "element": "wind",
+    "rarity": "epic",
+    "motif": "竜巻を纏う竜。嵐を呼び疾走する",
+    "personality": "豪快で気風がいい",
+    "baseStats": {
+      "hp": 1950,
+      "atk": 120,
+      "def": 60,
+      "spd": 100,
+      "sp": 130
+    },
+    "skills": [
+      {
+        "name": "颶風の断撃",
+        "sp": 40,
+        "targets": 1,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      },
+      {
+        "name": "双嵐撃",
+        "sp": 35,
+        "targets": 2,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "三連旋風",
+        "sp": 40,
+        "targets": 3,
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "暴風乱撃",
+        "sp": 30,
+        "targets": 4,
+        "tier": "小",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      }
+    ],
+    "image": "images/24.png"
+  },
+  {
+    "id": "wind05",
+    "name": "迦楼羅",
+    "element": "wind",
+    "rarity": "mythic",
+    "motif": "金色の翼を持つ鳥人の王。天空を統べる",
+    "personality": "威厳に満ち、慈悲深い",
+    "baseStats": {
+      "hp": 1950,
+      "atk": 120,
+      "def": 60,
+      "spd": 100,
+      "sp": 130
+    },
+    "skills": [
+      {
+        "name": "天翔の断罪",
+        "sp": 60,
+        "targets": 1,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "self",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1
+          }
+        ]
+      },
+      {
+        "name": "三連颶風撃",
+        "sp": 55,
+        "targets": 3,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "大気渦動",
+        "sp": 50,
+        "targets": "all",
+        "tier": "中",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "疾風神の采配",
+        "sp": 55,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1,
+            "count": 2
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -2,
+            "chance": 1.0,
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "image": "images/25.png"
+  },
+  {
+    "id": "title_gravity",
+    "name": "グラヴィオス",
+    "element": null,
+    "rarity": "title",
+    "motif": "銀河を彷徨う多面の巨躯。星々を吸い込む重力の化身",
+    "personality": "超然として無感情",
+    "baseStats": {
+      "hp": 2200,
+      "atk": 140,
+      "def": 70,
+      "spd": 85,
+      "sp": 130
+    },
+    "skills": [
+      {
+        "name": "引力崩壊",
+        "sp": 55,
+        "targets": "all",
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "特異点圧殺",
+        "sp": 70,
+        "targets": 1,
+        "tier": "極大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -2,
+            "chance": 1.0
+          }
+        ]
+      },
+      {
+        "name": "重力双爆",
+        "sp": 60,
+        "targets": 2,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "spd",
+            "stages": -1,
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "求心の号令",
+        "sp": 50,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "spd",
+            "stages": 1,
+            "chance": 1,
+            "count": "all"
+          }
+        ]
+      }
+    ],
+    "image": "images/26.png"
+  },
+  {
+    "id": "title_illusion",
+    "name": "イリュージャ",
+    "element": null,
+    "rarity": "title",
+    "motif": "虹色の触手と無数の眼を持つ幻視の怪物",
+    "personality": "気まぐれで捉えどころがない",
+    "baseStats": {
+      "hp": 2000,
+      "atk": 150,
+      "def": 60,
+      "spd": 95,
+      "sp": 135
+    },
+    "skills": [
+      {
+        "name": "千眼の幻惑",
+        "sp": 55,
+        "targets": 1,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "confusion",
+            "chance": 1.0
+          }
+        ]
+      },
+      {
+        "name": "狂想の残響",
+        "sp": 65,
+        "targets": 3,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "status",
+            "status": "confusion",
+            "chance": 0.4
+          }
+        ]
+      },
+      {
+        "name": "深淵解放",
+        "sp": 75,
+        "targets": "all",
+        "tier": "極大",
+        "effects": [
+          {
+            "type": "damage"
+          }
+        ]
+      },
+      {
+        "name": "虚無の加護",
+        "sp": 50,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "invincible",
+            "target": "ally",
+            "turns": 1
+          }
+        ]
+      }
+    ],
+    "image": "images/27.png"
+  },
+  {
+    "id": "title_chronos",
+    "name": "クロノヴィア",
+    "element": null,
+    "rarity": "title",
+    "motif": "瞑想する多腕の存在。時と因果を司る",
+    "personality": "静謐で達観している",
+    "baseStats": {
+      "hp": 2500,
+      "atk": 120,
+      "def": 90,
+      "spd": 75,
+      "sp": 140
+    },
+    "skills": [
+      {
+        "name": "刻断の一撃",
+        "sp": 70,
+        "targets": 2,
+        "tier": "極大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "heal",
+            "target": "ally",
+            "percent": 0.5,
+            "count": 2
+          }
+        ]
+      },
+      {
+        "name": "時流侵蝕",
+        "sp": 60,
+        "targets": "all",
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "heal",
+            "target": "allAllies",
+            "percent": 0.35
+          }
+        ]
+      },
+      {
+        "name": "因果逆転",
+        "sp": 65,
+        "targets": 1,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "heal",
+            "target": "ally",
+            "percent": 0.7
+          }
+        ]
+      },
+      {
+        "name": "万物調律",
+        "sp": 55,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "heal",
+            "target": "allAllies",
+            "percent": 0.35
+          },
+          {
+            "type": "healSp",
+            "target": "allAllies",
+            "percent": 0.25
+          }
+        ]
+      }
+    ],
+    "image": "images/28.png"
+  },
+  {
+    "id": "title_chance",
+    "name": "ジャッジオン",
+    "element": null,
+    "rarity": "title",
+    "motif": "黒鎧を纏う多腕の裁定者。運命を切り開く鍵を持つ",
+    "personality": "冷徹で公正、容赦がない",
+    "baseStats": {
+      "hp": 2100,
+      "atk": 155,
+      "def": 65,
+      "spd": 90,
+      "sp": 130
+    },
+    "skills": [
+      {
+        "name": "審判の一撃",
+        "sp": 70,
+        "targets": 1,
+        "tier": "極大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "followup",
+            "condition": "onKill",
+            "tier": "大",
+            "targets": 1
+          }
+        ]
+      },
+      {
+        "name": "双裁の断罪",
+        "sp": 60,
+        "targets": 2,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "followup",
+            "condition": "onKill",
+            "tier": "大",
+            "targets": 1
+          }
+        ]
+      },
+      {
+        "name": "全裁の宣告",
+        "sp": 55,
+        "targets": "all",
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "followup",
+            "condition": "onKill",
+            "tier": "特大",
+            "targets": 1
+          }
+        ]
+      },
+      {
+        "name": "好機の号令",
+        "sp": 45,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "atk",
+            "stages": 1,
+            "chance": 1,
+            "count": 2
+          }
+        ]
+      }
+    ],
+    "image": "images/29.png"
+  },
+  {
+    "id": "title_luck",
+    "name": "クローバー",
+    "element": null,
+    "rarity": "title",
+    "motif": "虹とクローバーを纏う幸運の妖精",
+    "personality": "明るく気まぐれ、悪戯好き",
+    "baseStats": {
+      "hp": 2600,
+      "atk": 95,
+      "def": 95,
+      "spd": 80,
+      "sp": 130
+    },
+    "skills": [
+      {
+        "name": "幸運剥奪撃",
+        "sp": 50,
+        "targets": 2,
+        "tier": "大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "crit",
+            "stages": -1,
+            "chance": 1.0,
+            "count": 2
+          }
+        ]
+      },
+      {
+        "name": "大盤振る舞い",
+        "sp": 60,
+        "targets": 4,
+        "tier": "特大",
+        "effects": [
+          {
+            "type": "damage"
+          },
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "crit",
+            "stages": 1,
+            "chance": 1,
+            "count": 2
+          }
+        ]
+      },
+      {
+        "name": "不運の呪詛",
+        "sp": 45,
+        "targets": 4,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "enemy",
+            "stat": "crit",
+            "stages": -1,
+            "chance": 1.0,
+            "count": 4
+          }
+        ]
+      },
+      {
+        "name": "幸運の祝福",
+        "sp": 45,
+        "targets": 0,
+        "tier": null,
+        "effects": [
+          {
+            "type": "buff",
+            "target": "ally",
+            "stat": "crit",
+            "stages": 1,
+            "chance": 1,
+            "count": 3
+          }
+        ]
+      }
+    ],
+    "image": "images/30.png"
+  }
+];
+
+  function getCharacterMaster(id) {
+    return CHARACTER_MASTER.find((c) => c.id === id) || null;
+  }
+
+  // ============================================================
+  // セーブデータ（localStorage）
+  // ============================================================
+  const STORAGE_KEYS = {
+    inventory: 'kaseki_inventory',   // 所持キャラ一覧（発掘で獲得した個体）
+    gold: 'kaseki_gold',
+    party: 'kaseki_party',           // 編成中のuid配列（最大3）
+    stones: 'kaseki_rocks',          // 「岩」の所持数（旧形式・移行元）
+    rocksV2: 'kaseki_rocks_v2',       // 「岩」タイプ別所持数
+    awakenMaterials: 'kaseki_awaken_materials', // 覚醒石の所持数（属性ごと）
+    playerLevel: 'kaseki_player_level',
+    playerExp: 'kaseki_player_exp',
+    stamina: 'kaseki_stamina',
+    staminaTs: 'kaseki_stamina_ts',  // 最後にスタミナを計算した時刻(ms)
+    rating: 'kaseki_rating',         // 闘技場レート
+    questUnlock: 'kaseki_quest_unlock',     // 解放済みクエストステージ(最大値)
+    dungeonUnlock: 'kaseki_dungeon_unlock', // 解放済みダンジョン難易度({種別:属性 -> 最大値})
+    starterGranted: 'kaseki_starter_granted', // 初回スターター(各属性コモン1体)付与済みフラグ
+    gem: 'kaseki_gem',               // 課金通貨ジェムの所持数
+    staminaTicket: 'kaseki_stamina_ticket', // 即時全回復チケットの所持数
+    monthlyPass: 'kaseki_monthly_pass',     // 月額パスの状態
+    purchaseCounts: 'kaseki_purchase_counts', // 回数限定商品の購入回数
+    spentYen: 'kaseki_spent_yen', // テストプレイ用：累計課金額（円）の自己申告カウンタ
+  };
+
+  function loadInventory() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.inventory);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveInventory(list) {
+    localStorage.setItem(STORAGE_KEYS.inventory, JSON.stringify(list));
+  }
+
+  /**
+   * 発掘完了時に呼ぶ：新しいキャラ個体をインベントリに追加する
+   * @param {string} charId - CHARACTER_MASTERのid
+   * @param {string} digGrade - 'S'|'A'|'B'|'C'|'D'
+   * @returns {object} 追加された個体データ
+   */
+  function addCharacterToInventory(charId, digGrade, forcePerfect) {
+    const master = getCharacterMaster(charId);
+    if (!master) throw new Error('Unknown character id: ' + charId);
+    const individuality = rollIndividuality(!!forcePerfect);
+    const instance = {
+      uid: 'inst_' + Date.now() + '_' + Math.floor(Math.random() * 100000),
+      charId,
+      digGrade,
+      individuality,
+      level: 1,
+      obtainedAt: Date.now(),
+    };
+    const inv = loadInventory();
+    inv.push(instance);
+    saveInventory(inv);
+    return instance;
+  }
+
+  // 初回プレイ時のみ：各属性のCOMMON個体を1体ずつ自動付与する（各属性の雰囲気を最初から確認できるように）
+  const STARTER_CHAR_IDS = ['fire01', 'water01', 'earth01']; // テストプレイ用：火・水・土の3属性コモン1体ずつ（本番は5属性に戻す想定）
+  function grantStarterCharactersIfFirstTime() {
+    if (localStorage.getItem(STORAGE_KEYS.starterGranted)) return false;
+    const inv = loadInventory();
+    if (inv.length > 0) {
+      // すでに何らかの所持キャラがいる場合は「初回」とは見なさず、何もしない
+      localStorage.setItem(STORAGE_KEYS.starterGranted, '1');
+      return false;
+    }
+    STARTER_CHAR_IDS.forEach(id => addCharacterToInventory(id, 'B'));
+    localStorage.setItem(STORAGE_KEYS.starterGranted, '1');
+    return true;
+  }
+
+  /**
+   * 強化倍率（16章改訂版）：レベル帯ごとに伸び率が加速するバンド制
+   * Lv1〜50は強化のみで到達可能（約×3.0）。Lv51以降は覚醒で上限を+10ずつ解放しないと入れない領域で、
+   * 伸び率はLv41〜50と同じ+6%/Lvを維持（これ以上は加速させず、覚醒側のボーナスで伸ばす設計）
+   */
+  const STRENGTHEN_BANDS = [
+    { from: 2,   to: 10,  rate: 0.02 }, // Lv2〜10：+2%/Lv（+18%）
+    { from: 11,  to: 20,  rate: 0.03 }, // Lv11〜20：+3%/Lv（+30%）
+    { from: 21,  to: 30,  rate: 0.04 }, // Lv21〜30：+4%/Lv（+40%）
+    { from: 31,  to: 40,  rate: 0.05 }, // Lv31〜40：+5%/Lv（+50%）
+    { from: 41,  to: 50,  rate: 0.06 }, // Lv41〜50：+6%/Lv（+60%）※強化単体の上限はここ
+    { from: 51,  to: 60,  rate: 0.06 }, // 覚醒1後：+6%/Lv（+60%）
+    { from: 61,  to: 70,  rate: 0.06 }, // 覚醒2後：+6%/Lv（+60%）
+    { from: 71,  to: 80,  rate: 0.06 }, // 覚醒3後：+6%/Lv（+60%）
+    { from: 81,  to: 90,  rate: 0.06 }, // 覚醒4後：+6%/Lv（+60%）
+    { from: 91,  to: 100, rate: 0.06 }, // 覚醒5後：+6%/Lv（+60%）
+  ];
+  function getStrengthenBandBonus(lv) {
+    let bonus = 0;
+    for (const band of STRENGTHEN_BANDS) {
+      if (lv < band.from) break;
+      const upper = Math.min(lv, band.to);
+      bonus += (upper - band.from + 1) * band.rate;
+    }
+    return bonus; // Lv50で+1.98(≒×3)、Lv100(覚醒5込み)で+4.98(≒×6)
+  }
+
+  // --- 覚醒 ---
+  // 覚醒1回につきステータス+25%（強化ボーナスとは同じ枠で加算＝掛け算の暴走を防ぐ設計）
+  const AWAKEN_STAT_BONUS = 0.25;
+  const AWAKEN_MAX_COUNT = 5;
+  const BASE_LEVEL_CAP = 50;
+  function getMaxLevelCap(awakenCount) {
+    return Math.min(100, BASE_LEVEL_CAP + (awakenCount || 0) * 10);
+  }
+  function getAwakenBonus(awakenCount) {
+    return (awakenCount || 0) * AWAKEN_STAT_BONUS; // 5回で+125%
+  }
+  // 覚醒に必要なゴールド・専用素材（素材は対象キャラの属性の「覚醒石」、ダンジョン産）
+  // 段階が上がるほどゴールド・素材ともに要求量が増える
+  const AWAKEN_REQUIREMENTS = [
+    { gold: 5000,  material: 3 },  // 1覚醒目：Lv50到達が条件
+    { gold: 12000, material: 5 },  // 2覚醒目：Lv60到達が条件
+    { gold: 25000, material: 8 },  // 3覚醒目：Lv70到達が条件
+    { gold: 45000, material: 12 }, // 4覚醒目：Lv80到達が条件
+    { gold: 75000, material: 18 }, // 5覚醒目：Lv90到達が条件
+  ];
+  function getAwakenRequirement(nextAwakenCount) {
+    return AWAKEN_REQUIREMENTS[nextAwakenCount - 1] || null;
+  }
+  // レベル帯が上がる（＝覚醒で解放した領域に入る）ほど1レベルあたりのゴールドコストも増加
+  const STRENGTHEN_COST_TIER_MUL = [1, 1.5, 2.0, 2.5, 3.0, 3.5]; // [Lv1-50, 51-60, 61-70, 71-80, 81-90, 91-100]
+  function getStrengthenCostTierMul(lv) {
+    if (lv <= 50) return STRENGTHEN_COST_TIER_MUL[0];
+    const tier = Math.min(5, Math.ceil((lv - 50) / 10));
+    return STRENGTHEN_COST_TIER_MUL[tier];
+  }
+
+  /**
+   * 所持個体の最終ステータスを計算する
+   * 最終ステータス = 基礎値 × レアリティ補正 × 個体差倍率 × 発掘評価補正 × (1 + 強化ボーナス + 覚醒ボーナス)
+   * @param {object} instance - loadInventory()の要素
+   * @param {number} [titleDungeonDifficulty] - 称号ダンジョン挑戦時のみ、HPに難易度倍率をかける
+   */
+  function calculateInstanceStats(instance, titleDungeonDifficulty) {
+    const master = getCharacterMaster(instance.charId);
+    if (!master) return null;
+    const rarityMul = RARITY_MUL[master.rarity] || 1.0;
+    const digMul = DIG_GRADE_MUL[instance.digGrade] || 1.0;
+    const ind = instance.individuality || { hp: 1, atk: 1, def: 1, spd: 1 };
+    const lv = instance.level || 1;
+    const awakenCount = instance.awakenCount || 0;
+    const strengthenMul = 1 + getStrengthenBandBonus(lv) + getAwakenBonus(awakenCount);
+    const hpDiffMul = master.rarity === 'title' && titleDungeonDifficulty
+      ? (TITLE_DUNGEON_HP_MUL[titleDungeonDifficulty] || 1)
+      : 1;
+    const b = master.baseStats;
+    return {
+      hp: Math.round(b.hp * rarityMul * ind.hp * digMul * strengthenMul * hpDiffMul),
+      atk: Math.round(b.atk * rarityMul * ind.atk * digMul * strengthenMul),
+      def: Math.round(b.def * rarityMul * ind.def * digMul * strengthenMul),
+      spd: Math.round(b.spd * rarityMul * ind.spd * digMul * strengthenMul),
+      sp: Math.round((b.sp || 100) * rarityMul), // 最大SPはキャラごとの基礎値×レアリティ補正（個体差・強化は影響しない）
+    };
+  }
+
+  // --- ゴールド ---
+  function getGold() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.gold) || '500', 10);
+  }
+  function setGold(v) {
+    localStorage.setItem(STORAGE_KEYS.gold, String(Math.max(0, Math.round(v))));
+  }
+  function addGold(delta) {
+    setGold(getGold() + delta);
+  }
+
+  // --- 累計課金額（テストプレイ用のトラッキング。実際の決済とは連動しない自己申告カウンタ） ---
+  function getSpentYen() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.spentYen) || '0', 10);
+  }
+  function addSpentYen(yen) {
+    const v = Math.max(0, getSpentYen() + Math.round(yen));
+    localStorage.setItem(STORAGE_KEYS.spentYen, String(v));
+    return v;
+  }
+
+  // --- ジェム（課金通貨） ---
+  function getGem() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.gem) || '0', 10);
+  }
+  function setGem(v) {
+    localStorage.setItem(STORAGE_KEYS.gem, String(Math.max(0, Math.round(v))));
+  }
+  function addGem(delta) {
+    setGem(getGem() + delta);
+    return getGem();
+  }
+  function spendGem(amount) {
+    if (getGem() < amount) return false;
+    setGem(getGem() - amount);
+    return true;
+  }
+
+  // --- スタミナ回復チケット（所持数） ---
+  function getStaminaTicketCount() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.staminaTicket) || '0', 10);
+  }
+  function addStaminaTicket(delta) {
+    const v = Math.max(0, getStaminaTicketCount() + delta);
+    localStorage.setItem(STORAGE_KEYS.staminaTicket, String(v));
+    return v;
+  }
+  function useStaminaTicket() {
+    if (getStaminaTicketCount() <= 0) return false;
+    addStaminaTicket(-1);
+    const cur = getStamina();
+    const max = getMaxStamina(getPlayerLevel());
+    setStaminaRaw(cur + max); // 超過保持あり
+    return true;
+  }
+
+  // --- 月額パス ---
+  function getPassInfo() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.monthlyPass);
+      return raw ? JSON.parse(raw) : { active: false, expiresAt: 0, lastClaimDate: '' };
+    } catch (e) {
+      return { active: false, expiresAt: 0, lastClaimDate: '' };
+    }
+  }
+  function savePassInfo(info) {
+    localStorage.setItem(STORAGE_KEYS.monthlyPass, JSON.stringify(info));
+  }
+  function activateMonthlyPass() {
+    const now = Date.now();
+    const info = getPassInfo();
+    const base = (info.active && info.expiresAt > now) ? info.expiresAt : now;
+    savePassInfo({ active: true, expiresAt: base + 30 * 24 * 60 * 60 * 1000, lastClaimDate: info.lastClaimDate || '' });
+  }
+  function isMonthlyPassActive() {
+    const info = getPassInfo();
+    return !!(info.active && info.expiresAt > Date.now());
+  }
+  function claimMonthlyPassDaily() {
+    if (!isMonthlyPassActive()) return { ok: false, reason: 'not_active' };
+    const info = getPassInfo();
+    const today = new Date().toISOString().slice(0, 10);
+    if (info.lastClaimDate === today) return { ok: false, reason: 'already_claimed' };
+    addStaminaTicket(1);
+    addGem(10);
+    addGold(3000);
+    savePassInfo({ ...info, lastClaimDate: today });
+    return { ok: true, staminaTicket: 1, gem: 10, gold: 3000 };
+  }
+  function canClaimMonthlyPassToday() {
+    if (!isMonthlyPassActive()) return false;
+    const today = new Date().toISOString().slice(0, 10);
+    return getPassInfo().lastClaimDate !== today;
+  }
+
+  // --- 課金購入回数（回数限定商品トラッキング用） ---
+  function getPurchaseCount(key) {
+    try {
+      const m = JSON.parse(localStorage.getItem(STORAGE_KEYS.purchaseCounts) || '{}');
+      return m[key] || 0;
+    } catch (e) { return 0; }
+  }
+  function addPurchaseCount(key) {
+    let m = {};
+    try { m = JSON.parse(localStorage.getItem(STORAGE_KEYS.purchaseCounts) || '{}'); } catch (e) { /* noop */ }
+    m[key] = (m[key] || 0) + 1;
+    localStorage.setItem(STORAGE_KEYS.purchaseCounts, JSON.stringify(m));
+    return m[key];
+  }
+
+  // --- 闘技場レート ---
+  const RATING_START = 1500;
+  const RATING_MIN = 1000;
+  function getRating() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.rating) || String(RATING_START), 10);
+  }
+  function setRating(v) {
+    localStorage.setItem(STORAGE_KEYS.rating, String(Math.max(RATING_MIN, Math.round(v))));
+  }
+  function addRating(delta) {
+    setRating(getRating() + delta);
+  }
+
+  // --- プレイヤーレベル（スタミナ上限に影響、Lv100が上限） ---
+  const PLAYER_LEVEL_CAP = 100;
+  const STAMINA_START = 20;   // 初期スタミナ上限（プレイヤーLv1時点）
+  const STAMINA_MAX_CAP = 300; // スタミナ上限の絶対最大値（Lv100到達で到達）
+  const STAMINA_PER_LEVEL = (STAMINA_MAX_CAP - STAMINA_START) / (PLAYER_LEVEL_CAP - 1); // Lv1→100で20→300になるよう均等割り（約2.83/Lv）
+  const STAMINA_REGEN_MS = 5 * 60 * 1000; // 5分で1回復
+  const PLAYER_EXP_PER_LEVEL = 50; // Lvごとに必要EXPが+50ずつ増える(Lv1→2は50, Lv2→3は100…)
+
+  function getPlayerLevel() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.playerLevel) || '1', 10);
+  }
+  function getPlayerExp() {
+    return parseInt(localStorage.getItem(STORAGE_KEYS.playerExp) || '0', 10);
+  }
+  function getExpToNextLevel(level) {
+    return level * PLAYER_EXP_PER_LEVEL;
+  }
+  function getMaxStamina(level) {
+    const lv = Math.min(PLAYER_LEVEL_CAP, level || getPlayerLevel());
+    return Math.round(Math.min(STAMINA_MAX_CAP, STAMINA_START + (lv - 1) * STAMINA_PER_LEVEL));
+  }
+  // プレイヤーEXPを加算し、必要ならレベルアップさせる（複数レベル分一気に上がるケースも考慮。Lv100でカンスト）
+  function addPlayerExp(amount) {
+    let level = getPlayerLevel();
+    if (level >= PLAYER_LEVEL_CAP) {
+      return { level: PLAYER_LEVEL_CAP, exp: 0, leveledUp: false }; // カンスト済みはEXPを受け取らない
+    }
+    let exp = getPlayerExp() + amount;
+    let leveledUp = false;
+    let stamBonus = 0; // レベルアップごとの「そのレベルのMAX値」を丸ごと積み上げる
+    while (level < PLAYER_LEVEL_CAP && exp >= getExpToNextLevel(level)) {
+      exp -= getExpToNextLevel(level);
+      level += 1;
+      leveledUp = true;
+      stamBonus += getMaxStamina(level); // 差分ではなく、そのレベル時点のMAX値をまるごと加算
+    }
+    if (level >= PLAYER_LEVEL_CAP) {
+      level = PLAYER_LEVEL_CAP;
+      exp = 0; // カンスト到達時は端数EXPを切り捨てて0にする
+    }
+    localStorage.setItem(STORAGE_KEYS.playerLevel, String(level));
+    localStorage.setItem(STORAGE_KEYS.playerExp, String(exp));
+    if (leveledUp) {
+      // 残っていたスタミナ＋新MAX値をそのまま加算（上限を超えるオーバーフローも許容する）
+      const stam = getStamina();
+      setStaminaRaw(stam + stamBonus);
+    }
+    return { level, exp, leveledUp };
+  }
+
+  // --- スタミナ ---
+  function setStaminaRaw(v) {
+    localStorage.setItem(STORAGE_KEYS.stamina, String(Math.max(0, Math.round(v))));
+    localStorage.setItem(STORAGE_KEYS.staminaTs, String(Date.now()));
+  }
+  // 経過時間分のスタミナ自然回復を計算してから現在値を返す
+  // ※レベルアップ直後などで上限を超えている場合はそのオーバーフローをそのまま維持する（自然減少で消費されるまで残る）
+  function getStamina() {
+    const max = getMaxStamina();
+    const rawStam = localStorage.getItem(STORAGE_KEYS.stamina);
+    const rawTs = localStorage.getItem(STORAGE_KEYS.staminaTs);
+    if (rawStam === null || rawTs === null) {
+      setStaminaRaw(STAMINA_START);
+      return STAMINA_START;
+    }
+    let stam = parseInt(rawStam, 10);
+    const ts = parseInt(rawTs, 10);
+    if (stam >= max) {
+      return stam; // 上限以上ならそのまま返す（減算するまでオーバーフローを保持）
+    }
+    const elapsedMs = Date.now() - ts;
+    const regen = Math.floor(elapsedMs / STAMINA_REGEN_MS);
+    if (regen > 0) {
+      stam = Math.min(max, stam + regen);
+      const remainderTs = ts + regen * STAMINA_REGEN_MS;
+      localStorage.setItem(STORAGE_KEYS.stamina, String(stam));
+      localStorage.setItem(STORAGE_KEYS.staminaTs, String(remainderTs));
+    }
+    return stam;
+  }
+  function getMsToNextStamina() {
+    const max = getMaxStamina();
+    const stam = getStamina();
+    if (stam >= max) return 0;
+    const ts = parseInt(localStorage.getItem(STORAGE_KEYS.staminaTs) || String(Date.now()), 10);
+    return Math.max(0, STAMINA_REGEN_MS - (Date.now() - ts));
+  }
+  function hasEnoughStamina(cost) {
+    return getStamina() >= cost;
+  }
+  // スタミナを消費する。足りなければ何もせずfalseを返す
+  function consumeStamina(cost) {
+    const cur = getStamina();
+    if (cur < cost) return false;
+    setStaminaRaw(cur - cost);
+    return true;
+  }
+
+  // --- 覚醒素材（属性ごとの「覚醒石」。ダンジョン産／今はまだダンジョン未実装なので付与手段は今後追加） ---
+  function getAwakenMaterials() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.awakenMaterials);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function getAwakenMaterialCount(element) {
+    return getAwakenMaterials()[element] || 0;
+  }
+  function addAwakenMaterial(element, delta) {
+    const m = getAwakenMaterials();
+    m[element] = Math.max(0, (m[element] || 0) + delta);
+    localStorage.setItem(STORAGE_KEYS.awakenMaterials, JSON.stringify(m));
+    return m[element];
+  }
+
+  // --- 強化 ---
+  function goldToNextLevel(currentLevel, awakenCount) {
+    const cap = getMaxLevelCap(awakenCount || 0);
+    if (currentLevel >= cap) return null;
+    return Math.round(currentLevel * 100 * getStrengthenCostTierMul(currentLevel)); // Lv×100G×帯倍率
+  }
+  function strengthenInstance(uid) {
+    const inv = loadInventory();
+    const inst = inv.find((i) => i.uid === uid);
+    if (!inst) return { ok: false, reason: 'not_found' };
+    const cost = goldToNextLevel(inst.level, inst.awakenCount || 0);
+    if (cost === null) return { ok: false, reason: 'max_level' };
+    if (getGold() < cost) return { ok: false, reason: 'not_enough_gold' };
+    addGold(-cost);
+    inst.level += 1;
+    saveInventory(inv);
+    return { ok: true, newLevel: inst.level, spentGold: cost };
+  }
+
+  /**
+   * 覚醒を実行する。条件：現在の覚醒段階の上限レベルまで強化済み、かつゴールド・専用素材が足りていること
+   */
+  function awakenInstance(uid) {
+    const inv = loadInventory();
+    const inst = inv.find((i) => i.uid === uid);
+    if (!inst) return { ok: false, reason: 'not_found' };
+    const master = getCharacterMaster(inst.charId);
+    if (!master) return { ok: false, reason: 'not_found' };
+    const cur = inst.awakenCount || 0;
+    if (cur >= AWAKEN_MAX_COUNT) return { ok: false, reason: 'max_awaken' };
+    const requiredLevel = getMaxLevelCap(cur);
+    if ((inst.level || 1) < requiredLevel) {
+      return { ok: false, reason: 'level_not_maxed', requiredLevel };
+    }
+    const req = getAwakenRequirement(cur + 1);
+    if (!req) return { ok: false, reason: 'no_requirement_data' };
+    if (getGold() < req.gold) return { ok: false, reason: 'not_enough_gold', need: req.gold };
+    const materialKey = master.element || 'title';
+    const haveMaterial = getAwakenMaterialCount(materialKey);
+    if (haveMaterial < req.material) {
+      return { ok: false, reason: 'not_enough_material', need: req.material, have: haveMaterial, element: materialKey };
+    }
+    addGold(-req.gold);
+    addAwakenMaterial(materialKey, -req.material);
+    inst.awakenCount = cur + 1;
+    saveInventory(inv);
+    return {
+      ok: true,
+      newAwakenCount: inst.awakenCount,
+      newLevelCap: getMaxLevelCap(inst.awakenCount),
+      spentGold: req.gold,
+      spentMaterial: req.material,
+    };
+  }
+
+  // --- 「岩」（タイプ別：ノーマル／属性5種／イベント(称号)） ---
+  const ROCK_TYPES = ['normal', 'fire', 'water', 'earth', 'thunder', 'wind', 'quality', 'select_normal', 'select_fire', 'select_water', 'select_earth', 'select_thunder', 'select_wind', 'guarantee_epic', 'guarantee_mythic', 'title_gravity', 'title_illusion', 'title_chronos', 'title_chance', 'title_luck'];
+  const ROCK_TYPE_INFO = {
+    normal:  { label: 'ノーマル岩',   color: '#8a8272', icon: '🪨' },
+    fire:    { label: '火属性岩',     color: '#ff8844', icon: '🔥' },
+    water:   { label: '水属性岩',     color: '#4dc8ff', icon: '💧' },
+    earth:   { label: '土属性岩',     color: '#c89858', icon: '🪨' },
+    thunder: { label: '雷属性岩',     color: '#f0d840', icon: '⚡' },
+    wind:    { label: '風属性岩',     color: '#88e0a8', icon: '🌬️' },
+    quality: { label: '上質岩',       color: '#ff9a4a', icon: '💎' }, // 岩ダンジョン産。ノーマル岩よりレア/エピックが出やすい
+    // ショップ購入限定：厳選確定岩（1〜4ステータスが個性1.5倍の「厳選当たり個体」を確定で引く）
+    select_normal:  { label: '厳選岩',     color: '#7fe3ff', icon: '✨' },
+    select_fire:    { label: '火厳選岩',   color: '#7fe3ff', icon: '🔥' },
+    select_water:   { label: '水厳選岩',   color: '#7fe3ff', icon: '💧' },
+    select_earth:   { label: '土厳選岩',   color: '#7fe3ff', icon: '🪨' },
+    select_thunder: { label: '雷厳選岩',   color: '#7fe3ff', icon: '⚡' },
+    select_wind:    { label: '風厳選岩',   color: '#7fe3ff', icon: '🌬️' },
+    // ショップ購入限定：レアリティ確率保証岩（50%の確率で指定レアリティ以上が確定）
+    guarantee_epic:   { label: 'EPIC確率岩',   color: '#b478ff', icon: '🔮' },
+    guarantee_mythic: { label: 'MYTHIC確率岩', color: '#ff5fd1', icon: '👑' },
+    // 称号キャラ確定岩（各称号ダンジョンのクリア報酬。掘るとそのキャラが確定で出現する）
+    title_gravity:  { label: '重力の確定岩', color: '#8a6ad4', icon: '🌌' },
+    title_illusion: { label: '幻の確定岩',   color: '#4ad4c8', icon: '🌀' },
+    title_chronos:  { label: '時空の確定岩', color: '#d4a84a', icon: '⏳' },
+    title_chance:   { label: '機会の確定岩', color: '#d44a6a', icon: '🎲' },
+    title_luck:     { label: '幸運の確定岩', color: '#6ad46a', icon: '🍀' },
+  };
+  function loadRocks() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.rocksV2);
+      if (raw) return JSON.parse(raw);
+    } catch (e) { /* fallthrough */ }
+    // 旧形式（種別なしの単一カウント）からの移行
+    const legacy = parseInt(localStorage.getItem(STORAGE_KEYS.stones) || '3', 10);
+    const init = { normal: legacy, fire: 0, water: 0, earth: 0, thunder: 0, wind: 0, event: 0 };
+    saveRocks(init);
+    return init;
+  }
+  function saveRocks(obj) {
+    localStorage.setItem(STORAGE_KEYS.rocksV2, JSON.stringify(obj));
+  }
+  function getRockCount(type) {
+    return loadRocks()[type || 'normal'] || 0;
+  }
+  function getAllRockCounts() {
+    const r = loadRocks();
+    const out = {};
+    ROCK_TYPES.forEach(t => { out[t] = r[t] || 0; });
+    return out;
+  }
+  function setRockCount(v, type) {
+    const r = loadRocks();
+    r[type || 'normal'] = Math.max(0, Math.round(v));
+    saveRocks(r);
+  }
+  function addRocks(delta, type) {
+    const r = loadRocks();
+    const key = type || 'normal';
+    r[key] = Math.max(0, (r[key] || 0) + delta);
+    saveRocks(r);
+    return r[key];
+  }
+  function useRock(type) {
+    const r = loadRocks();
+    const key = type || 'normal';
+    if ((r[key] || 0) <= 0) return false;
+    r[key] -= 1;
+    saveRocks(r);
+    return true;
+  }
+
+  // --- 総合力（ドラエグ風の分かりやすい単一指標） ---
+  // HPは大きい数値のため1/10で正規化し、他ステータスと重み付け合算する
+  function calculatePower(stats) {
+    if (!stats) return 0;
+    return Math.round(stats.hp / 10 + stats.atk * 3 + stats.def * 3 + stats.spd * 2 + (stats.sp || 0) * 1);
+  }
+
+  // --- クエストステージ解放状況（1〜20、クリアで次が解放） ---
+  const QUEST_MAX_STAGE = 20;
+  function getQuestUnlockedStage() {
+    return Math.min(QUEST_MAX_STAGE, parseInt(localStorage.getItem(STORAGE_KEYS.questUnlock) || '1', 10));
+  }
+  function reportQuestStageCleared(stageNum) {
+    const cur = getQuestUnlockedStage();
+    // 現在の最前線ステージ(cur)をクリアした時だけ次を解放する（UI側で未解放ステージは選べない前提の保険）
+    if (stageNum === cur && cur < QUEST_MAX_STAGE) {
+      localStorage.setItem(STORAGE_KEYS.questUnlock, String(Math.min(QUEST_MAX_STAGE, cur + 1)));
+    }
+  }
+
+  // --- ダンジョン難易度解放状況（種別・属性ごとに個別管理） ---
+  function dungeonUnlockKey(kind, element) {
+    return `${kind}:${element || ''}`;
+  }
+  function loadDungeonUnlocks() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEYS.dungeonUnlock) || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+  function getDungeonUnlockedDifficulty(kind, element) {
+    const m = loadDungeonUnlocks();
+    return m[dungeonUnlockKey(kind, element)] || 1;
+  }
+  function reportDungeonDifficultyCleared(kind, element, difficulty, maxDifficulty) {
+    const m = loadDungeonUnlocks();
+    const key = dungeonUnlockKey(kind, element);
+    const cur = m[key] || 1;
+    if (difficulty === cur && cur < maxDifficulty) {
+      m[key] = Math.min(maxDifficulty, cur + 1);
+      localStorage.setItem(STORAGE_KEYS.dungeonUnlock, JSON.stringify(m));
+    }
+  }
+
+  // --- 編成（パーティ） ---
+  function loadParty() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEYS.party);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveParty(uids) {
+    localStorage.setItem(STORAGE_KEYS.party, JSON.stringify(uids.slice(0, 6)));
+  }
+
+  /**
+   * 編成中パーティを auto-battle.html が使える戦闘用データ形式に変換
+   */
+  function getPartyAsFighterDefs() {
+    const inv = loadInventory();
+    const party = loadParty();
+    const defs = party
+      .map((uid) => inv.find((i) => i.uid === uid))
+      .filter(Boolean)
+      .map((inst) => {
+        const master = getCharacterMaster(inst.charId);
+        const stats = calculateInstanceStats(inst);
+        return {
+          uid: inst.uid,
+          name: master.name,
+          element: master.element,
+          rarity: master.rarity,
+          level: inst.level,
+          skills: master.skills,
+          stats, // { hp, atk, def, spd } 計算済み
+        };
+      });
+    return defs;
+  }
+
+  // ============================================================
+  // ダメージ計算（10章のダメージ計算式）
+  // ============================================================
+  function calculateDamage(power, atk, def, atkElement, defElement, targetMul, atkRarity, defRarity) {
+    const eff = getTypeMultiplier(atkElement, defElement, atkRarity, defRarity);
+    const rng = 0.85 + Math.random() * 0.15;
+    const raw = power * (targetMul || 1.0) * (atk / def) * eff * rng;
+    return { dmg: Math.max(1, Math.round(raw)), eff };
+  }
+
+  // ============================================================
+  // 発掘用：発掘ミニゲームが使うFOSSILS形式へ変換するヘルパー
+  // ============================================================
+  function getNormalCharacterList() {
+    // TITLE(称号)キャラは通常発掘の対象外
+    return CHARACTER_MASTER.filter((c) => c.rarity !== 'title');
+  }
+
+  // ============================================================
+  // 公開API
+  // ============================================================
+  const GameData = {
+    // 定数
+    TYPE_CHART, ELEM_ICONS, ELEM_COLORS, ELEM_LABEL,
+    RARITY_MUL, RARITY_LABEL, RARITY_COLOR, DIG_GRADE_MUL,
+    TIER_POWER, TIER_MULTIPLIER, POWER_BASE, TARGET_COUNT_MULTIPLIER, TITLE_DUNGEON_HP_MUL,
+    BASE_LEVEL_CAP, AWAKEN_MAX_COUNT, AWAKEN_STAT_BONUS, AWAKEN_REQUIREMENTS,
+    CHARACTER_MASTER,
+
+    // ロジック
+    getTypeMultiplier,
+    getTargetMultiplier,
+    rollIndividuality,
+    rollPerfectStatCount,
+    PERFECT_COUNT_TABLE,
+    calculateDamage,
+    getCharacterMaster,
+    getNormalCharacterList,
+    calculateInstanceStats,
+    getStrengthenBandBonus,
+    getMaxLevelCap,
+    getAwakenBonus,
+    getAwakenRequirement,
+    getStrengthenCostTierMul,
+
+    // セーブデータ
+    loadInventory,
+    saveInventory,
+    addCharacterToInventory,
+    grantStarterCharactersIfFirstTime,
+    getGold,
+    setGold,
+    addGold,
+    getSpentYen,
+    addSpentYen,
+    getGem,
+    setGem,
+    addGem,
+    spendGem,
+    getStaminaTicketCount,
+    addStaminaTicket,
+    useStaminaTicket,
+    getPassInfo,
+    activateMonthlyPass,
+    isMonthlyPassActive,
+    claimMonthlyPassDaily,
+    canClaimMonthlyPassToday,
+    getPurchaseCount,
+    addPurchaseCount,
+    getRating,
+    setRating,
+    addRating,
+    RATING_START,
+    RATING_MIN,
+    goldToNextLevel,
+    strengthenInstance,
+    awakenInstance,
+    getAwakenMaterials,
+    getAwakenMaterialCount,
+    addAwakenMaterial,
+    getRockCount,
+    setRockCount,
+    addRocks,
+    useRock,
+    getAllRockCounts,
+    ROCK_TYPES,
+    ROCK_TYPE_INFO,
+    calculatePower,
+    QUEST_MAX_STAGE,
+    getQuestUnlockedStage,
+    reportQuestStageCleared,
+    getDungeonUnlockedDifficulty,
+    reportDungeonDifficultyCleared,
+    loadParty,
+    saveParty,
+    getPartyAsFighterDefs,
+    // プレイヤーレベル・スタミナ
+    STAMINA_START, STAMINA_MAX_CAP, STAMINA_PER_LEVEL, STAMINA_REGEN_MS, PLAYER_LEVEL_CAP,
+    getPlayerLevel,
+    getPlayerExp,
+    getExpToNextLevel,
+    addPlayerExp,
+    getMaxStamina,
+    getStamina,
+    getMsToNextStamina,
+    hasEnoughStamina,
+    consumeStamina,
+  };
+
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = GameData;
+  } else {
+    global.GameData = GameData;
+  }
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+// ==============================================================
+// ショップ画面ロジック
+// ==============================================================
+
+// ---------- 共通UI：トースト & 確認モーダル ----------
+let toastTimer = null;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2200);
+}
+
+function confirmPurchase(title, msg, onOk) {
+  const overlay = document.getElementById('confirm-overlay');
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').innerHTML = msg;
+  overlay.classList.add('show');
+  const okBtn = document.getElementById('confirm-ok');
+  const cancelBtn = document.getElementById('confirm-cancel');
+  const cleanup = () => {
+    overlay.classList.remove('show');
+    okBtn.onclick = null;
+    cancelBtn.onclick = null;
+  };
+  okBtn.onclick = () => { cleanup(); onOk(); };
+  cancelBtn.onclick = cleanup;
+}
+
+// ---------- 詳細情報モーダル ----------
+function openDetail(title, bodyHtml) {
+  document.getElementById('detail-title').textContent = title;
+  document.getElementById('detail-body').innerHTML = bodyHtml;
+  document.getElementById('detail-overlay').classList.add('show');
+}
+document.getElementById('detail-close').onclick = () => {
+  document.getElementById('detail-overlay').classList.remove('show');
+};
+document.getElementById('detail-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'detail-overlay') document.getElementById('detail-overlay').classList.remove('show');
+});
+
+// ---------- ウォレット表示更新 ----------
+function refreshWallet() {
+  document.getElementById('gem-val').textContent = GameData.getGem().toLocaleString();
+  document.getElementById('gold-val').textContent = GameData.getGold().toLocaleString();
+  document.getElementById('spent-yen-val').textContent = GameData.getSpentYen().toLocaleString();
+  document.getElementById('ticket-count').textContent = GameData.getStaminaTicketCount();
+  document.getElementById('use-ticket-btn').disabled = GameData.getStaminaTicketCount() <= 0;
+  refreshPassStatus();
+}
+
+// ---------- タブ切り替え ----------
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('show'));
+    btn.classList.add('active');
+    document.getElementById('pane-' + btn.dataset.tab).classList.add('show');
+  });
+});
+
+// ==============================================================
+// 1. ジェムパック（現金購入・テスト用即時付与）
+// ==============================================================
+const GEM_PACKS = [
+  { id:'s',   gem:160,  bonus:0,    yen:160,  badge:null },
+  { id:'m',   gem:400,  bonus:40,   yen:400,  badge:{cls:'badge-bonus', label:'+10%'} },
+  { id:'l',   gem:800,  bonus:160,  yen:800,  badge:{cls:'badge-bonus', label:'+20%'} },
+  { id:'ll',  gem:1600, bonus:480,  yen:1600, badge:{cls:'badge-hot',   label:'+30% 人気'} },
+  { id:'xl',  gem:3000, bonus:1200, yen:3000, badge:{cls:'badge-bonus', label:'+40%'} },
+  { id:'xxl', gem:6000, bonus:3000, yen:6000, badge:{cls:'badge-best',  label:'+50% 最もお得'} },
+];
+const GEM_PACK_LABEL = { s:'Sパック', m:'Mパック', l:'Lパック', ll:'LLパック', xl:'XLパック', xxl:'XXLパック' };
+
+function renderGemPacks() {
+  const grid = document.getElementById('grid-gem');
+  grid.innerHTML = GEM_PACKS.map(p => {
+    const total = p.gem + p.bonus;
+    const rate = (total / p.yen).toFixed(2);
+    return `
+    <div class="shop-card">
+      ${p.badge ? `<span class="card-badge ${p.badge.cls}">${p.badge.label}</span>` : ''}
+      <span class="info-btn" onclick="openGemPackDetail('${p.id}')">i</span>
+      <div class="card-visual cv-gem">💎</div>
+      <div class="card-body">
+        <div class="card-title">${GEM_PACK_LABEL[p.id]}</div>
+        <div class="card-desc"><b>${total.toLocaleString()}</b>ジェム${p.bonus ? `（本体${p.gem.toLocaleString()}+ボーナス${p.bonus.toLocaleString()}）` : ''}<br>1円=${rate}ジェム</div>
+        <div class="card-price-row">
+          <span class="card-price yen">${p.yen.toLocaleString()}円</span>
+          <button class="buy-btn gem-btn" onclick="buyGemPack('${p.id}')">購入</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openGemPackDetail(id) {
+  const p = GEM_PACKS.find(x => x.id === id);
+  const total = p.gem + p.bonus;
+  const rate = (total / p.yen).toFixed(2);
+  openDetail(`${GEM_PACK_LABEL[id]}の詳細`, `
+    <div class="dt-row">
+      <div class="dt-label">内容</div>
+      本体ジェム <b>${p.gem.toLocaleString()}</b>${p.bonus ? ` ＋ ボーナス <b>${p.bonus.toLocaleString()}</b>（+${Math.round(p.bonus/p.gem*100)}%）` : '（ボーナスなし）'}
+    </div>
+    <div class="dt-row">
+      <div class="dt-label">価格・レート</div>
+      ${p.yen.toLocaleString()}円で<b>${total.toLocaleString()}ジェム</b>（1円あたり<b>${rate}ジェム</b>）
+    </div>
+    <div class="dt-row">
+      <div class="dt-label">使いみち</div>
+      ジェムは岩セット・ゴールドパック・スタミナ回復チケットと交換できる、このゲーム共通の課金通貨です。
+    </div>
+    <div class="dt-row warn">
+      ※現在はテスト用ボタンです。実際の決済（ストア課金）は未実装のため、実際の請求は発生しません。
+    </div>
+  `);
+}
+
+function buyGemPack(id) {
+  const p = GEM_PACKS.find(x => x.id === id);
+  const total = p.gem + p.bonus;
+  confirmPurchase(
+    `${GEM_PACK_LABEL[id]}を購入`,
+    `<b style="color:#7fe3ff;">${total.toLocaleString()}ジェム</b> を ${p.yen.toLocaleString()}円 で購入します。<br><br>
+     <span style="font-size:10px;color:#7a6c56;">※現在はテスト用ボタンです。実際の決済（ストア課金）は未実装のため、実際の請求は発生しません。</span>`,
+    () => {
+      GameData.addGem(total);
+      GameData.addSpentYen(p.yen);
+      refreshWallet();
+      toast(`💎 ジェムを${total.toLocaleString()}個 獲得しました！`);
+    }
+  );
+}
+
+// ==============================================================
+// 2. 岩セット（ジェム消費）
+// ==============================================================
+const ELEMENTS = [
+  { key:'fire',    icon:'🔥' },
+  { key:'water',   icon:'💧' },
+  { key:'earth',   icon:'🪨' },
+  { key:'thunder', icon:'⚡' },
+  { key:'wind',    icon:'🌬️' },
+];
+let selectedElemNormal = 'fire';
+let selectedElemSelect = 'fire';
+
+const ROCK_PRODUCTS = [
+  { id:'normal20',    title:'通常岩 20個セット', desc:'ノーマル岩×<b>20</b>', cost:550, icon:'🪨', visual:'cv-rock', kind:'plain', rockType:'normal', qty:20 },
+  { id:'normal_sel3',  title:'通常岩・厳選3個',   desc:'「厳選当たり個体」<b>確定</b>×3<br><span style="color:#7fe3ff;">1〜4ステータスが個性1.5倍</span>（通常1%）', cost:500, icon:'✨', visual:'cv-rock', kind:'limited3', rockType:'select_normal', qty:3, limitKey:'normal_sel3' },
+  { id:'elem10',       title:'属性岩 10個セット', desc:'選んだ属性の岩×<b>10</b>', cost:650, icon:'🌈', visual:'cv-rock', kind:'elem', qty:10, elemPicker:'normal' },
+  { id:'elem_sel3',    title:'属性岩・厳選3個',   desc:'選んだ属性で「厳選当たり個体」<b>確定</b>×3<br><span style="color:#7fe3ff;">1〜4ステータスが個性1.5倍</span>（通常1%）', cost:750, icon:'🌟', visual:'cv-rock', kind:'elemLimited3', qty:3, elemPicker:'select', limitKey:'elem_sel3' },
+  { id:'epic50',       title:'EPIC確率50%岩', desc:'属性ランダム、<b style="color:#b478ff;">EPIC以上のレアリティ</b>が確定<b>50%</b>', cost:900, icon:'🔮', visual:'cv-rock', kind:'limited3', rockType:'guarantee_epic', qty:1, limitKey:'epic50' },
+  { id:'mythic50',     title:'MYTHIC確率50%岩', desc:'属性ランダム、<b style="color:#ff5fd1;">MYTHICのレアリティ</b>が確定<b>50%</b>', cost:1800, icon:'👑', visual:'cv-rock', kind:'limited3', rockType:'guarantee_mythic', qty:1, limitKey:'mythic50' },
+];
+
+// 商品ごとの詳細説明（「詳しく見る」モーダル用）
+const ROCK_DETAIL = {
+  normal20: `
+    <div class="dt-row"><div class="dt-label">内容</div>ノーマル岩×<b>20個</b>（発掘20回分）</div>
+    <div class="dt-row"><div class="dt-label">レアリティ・属性</div>通常の発掘と同じ抽選です（属性ランダム、個性値も通常抽選）。</div>
+    <div class="dt-row"><div class="dt-label">価格の目安</div>💎550＝約500円相当（岩1個あたり約27.5ジェム）</div>`,
+  normal_sel3: `
+    <div class="dt-row"><div class="dt-label">「厳選当たり個体」とは</div>
+      キャラクターのHP・攻撃・防御・素早さのうち、<b>1〜4個のステータスの個性値</b>が最大値の<b>1.5倍</b>になる個体のことです。通常の発掘では約<b>1%</b>の確率でしか出現しません。<br>
+      個性値が1.5倍になるステータスの<b>個数</b>は抽選制です：<br>
+      1つ<b>50%</b>／2つ<b>30%</b>／3つ<b>15%</b>／4つ（全ステ）<b>5%</b><br>
+      <span class="warn">※必ず全4ステータスが1.5倍になるわけではありません。最低1つは1.5倍が確定します（期待値：平均1.75個）。</span>
+    </div>
+    <div class="dt-row"><div class="dt-label">内容</div>この岩から発掘すると、キャラクターのレアリティ・属性は通常抽選のまま、「厳選当たり個体」の判定だけ<b>100%確定</b>で出現します（×3回分）。1.5倍になる個数・部位は上記の抽選です。</div>
+    <div class="dt-row"><div class="dt-label">価格の目安</div>💎500＝約450円相当。通常なら平均100回発掘してようやく1体出会える「厳選当たり」を、確実に3体入手できます。</div>`,
+  elem10: `
+    <div class="dt-row"><div class="dt-label">内容</div>選んだ属性の岩×<b>10個</b>（発掘10回分）</div>
+    <div class="dt-row"><div class="dt-label">レアリティ・個性</div>属性だけ固定で、レアリティ・個性値は通常抽選です。</div>
+    <div class="dt-row"><div class="dt-label">価格の目安</div>💎650＝約590円相当（岩1個あたり65ジェム。属性を選べる分、通常岩より割高です）</div>`,
+  elem_sel3: `
+    <div class="dt-row"><div class="dt-label">「厳選当たり個体」とは</div>
+      HP・攻撃・防御・素早さのうち<b>1〜4個のステータスの個性値</b>が<b>1.5倍</b>になる個体。通常は約<b>1%</b>の確率です。<br>
+      個数の内訳：1つ<b>50%</b>／2つ<b>30%</b>／3つ<b>15%</b>／4つ<b>5%</b>（期待値：平均1.75個）<br>
+      <span class="warn">※必ず全4ステータスが1.5倍になるわけではありません。</span>
+    </div>
+    <div class="dt-row"><div class="dt-label">内容</div>選んだ属性・「厳選当たり個体」の判定が<b>両方確定</b>で出現します（×3回分）。属性指定＋レア個体確定の二重プレミアム商品です。</div>
+    <div class="dt-row"><div class="dt-label">価格の目安</div>💎750＝約680円相当。狙った属性でレア個体を確実に狙えます。</div>`,
+  epic50: `
+    <div class="dt-row"><div class="dt-label">「確率50%」の意味</div>この岩から発掘した際、<b>50%の確率</b>でキャラクターのレアリティが<b style="color:#b478ff;">EPIC以上（EPIC/MYTHIC/称号）</b>で確定します。残り50%は通常のレアリティ抽選です。</div>
+    <div class="dt-row"><div class="dt-label">属性・個性</div>属性はランダム、個性値は通常抽選です（厳選当たり個体は別枠・保証されません）。</div>
+    <div class="dt-row"><div class="dt-label">価格の目安</div>💎900＝約800円相当。</div>`,
+  mythic50: `
+    <div class="dt-row"><div class="dt-label">「確率50%」の意味</div>この岩から発掘した際、<b>50%の確率</b>でキャラクターのレアリティが<b style="color:#ff5fd1;">MYTHIC</b>で確定します。残り50%は通常のレアリティ抽選です。</div>
+    <div class="dt-row"><div class="dt-label">属性・個性</div>属性はランダム、個性値は通常抽選です（厳選当たり個体は別枠・保証されません）。</div>
+    <div class="dt-row"><div class="dt-label">価格の目安</div>💎1,800＝約1,640円相当。最高レアリティ確定枠のため最も高価格です。</div>`,
+};
+
+function renderElemPicker(groupKey, selected) {
+  return `<div class="elem-picker" data-group="${groupKey}">` +
+    ELEMENTS.map(e => `<span class="elem-chip ${e.key===selected?'active':''}" data-elem="${e.key}" onclick="pickElem('${groupKey}','${e.key}')">${e.icon}</span>`).join('') +
+    `</div>`;
+}
+
+function pickElem(groupKey, elemKey) {
+  if (groupKey === 'normal') selectedElemNormal = elemKey; else selectedElemSelect = elemKey;
+  renderRockProducts();
+}
+
+function renderRockProducts() {
+  const grid = document.getElementById('grid-rock');
+  grid.innerHTML = ROCK_PRODUCTS.map(p => {
+    let badge = '';
+    let limitNote = '';
+    let disabled = false;
+    if (p.kind === 'limited3' || p.kind === 'elemLimited3') {
+      const used = GameData.getPurchaseCount(p.limitKey);
+      const remain = Math.max(0, 3 - used);
+      badge = `<span class="card-badge badge-limit">残り${remain}/3</span>`;
+      limitNote = `<div class="card-limit-note">今月あと${remain}回まで購入可</div>`;
+      disabled = remain <= 0;
+    }
+    const elemBlock = p.elemPicker ? renderElemPicker(p.elemPicker, p.elemPicker === 'normal' ? selectedElemNormal : selectedElemSelect) : '';
+    return `
+    <div class="shop-card ${disabled ? 'disabled' : ''}">
+      ${badge}
+      <span class="info-btn" onclick="openDetail('${p.title}', ROCK_DETAIL['${p.id}'])">i</span>
+      <div class="card-visual ${p.visual}">${p.icon}</div>
+      <div class="card-body">
+        <div class="card-title">${p.title}</div>
+        <div class="card-desc">${p.desc}</div>
+        ${limitNote}
+        ${elemBlock}
+        <div class="card-price-row">
+          <span class="card-price gem-cost">💎${p.cost.toLocaleString()}</span>
+          <button class="buy-btn" ${disabled ? 'disabled' : ''} onclick="buyRockProduct('${p.id}')">交換</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buyRockProduct(id) {
+  const p = ROCK_PRODUCTS.find(x => x.id === id);
+  if (GameData.getGem() < p.cost) { toast('💎 ジェムが足りません'); return; }
+  let rockType = p.rockType;
+  let elemLabel = '';
+  if (p.kind === 'elem') { rockType = selectedElemNormal; elemLabel = ELEMENTS.find(e=>e.key===selectedElemNormal).icon; }
+  if (p.kind === 'elemLimited3') { rockType = 'select_' + selectedElemSelect; elemLabel = ELEMENTS.find(e=>e.key===selectedElemSelect).icon; }
+  const selectNote = (rockType === 'select_normal' || rockType.startsWith('select_'))
+    ? '<br><span style="font-size:10px;color:#7fe3ff;">※「厳選当たり個体」（1〜4ステータスが個性1.5倍）が確定します</span>' : '';
+
+  confirmPurchase(
+    p.title,
+    `${elemLabel}${GameData.ROCK_TYPE_INFO[rockType] ? GameData.ROCK_TYPE_INFO[rockType].label : rockType}を<b>${p.qty}個</b>と交換します。<br>消費ジェム：<b style="color:#7fe3ff;">💎${p.cost}</b>${selectNote}`,
+    () => {
+      if (!GameData.spendGem(p.cost)) { toast('💎 ジェムが足りません'); return; }
+      GameData.addRocks(p.qty, rockType);
+      if (p.limitKey) GameData.addPurchaseCount(p.limitKey);
+      refreshWallet();
+      renderRockProducts();
+      toast(`🪨 ${GameData.ROCK_TYPE_INFO[rockType].icon}${GameData.ROCK_TYPE_INFO[rockType].label}を${p.qty}個 獲得しました！`);
+    }
+  );
+}
+
+// ==============================================================
+// 3. ゴールドパック（ジェム消費）
+// ==============================================================
+const GOLD_PRODUCTS = [
+  { id:'g50_80',  title:'Lv50→80分 ゴールド', desc:'約<b>388,000G</b>（岩ダンジョン約7.8周分相当）', gold:388000, cost:550, icon:'🪙' },
+  { id:'g80_100', title:'Lv80→100分 ゴールド', desc:'約<b>576,000G</b>（岩ダンジョン約11.5周分相当）', gold:576000, cost:750, icon:'🪙' },
+  { id:'gfull',   title:'フルカンスト応援パック', desc:'Lv50→100分＋覚醒石一式（約<b>96万G</b>＋覚醒5回分素材相当）', gold:960000, cost:1200, icon:'👑', badge:{cls:'badge-best', label:'イチオシ'} },
+];
+const GOLD_DETAIL = {
+  g50_80:  `<div class="dt-row"><div class="dt-label">内容</div>ゴールド <b>388,000G</b> を即時獲得</div><div class="dt-row"><div class="dt-label">目安</div>岩ダンジョン周回で例えると約7.8周分。Lv50〜80のレベル上げに必要な差分に相当します。</div><div class="dt-row"><div class="dt-label">価格の目安</div>💎550＝約500円相当</div>`,
+  g80_100: `<div class="dt-row"><div class="dt-label">内容</div>ゴールド <b>576,000G</b> を即時獲得</div><div class="dt-row"><div class="dt-label">目安</div>岩ダンジョン周回で例えると約11.5周分。Lv80〜100のレベル上げに必要な差分に相当します。</div><div class="dt-row"><div class="dt-label">価格の目安</div>💎750＝約680円相当</div>`,
+  gfull:   `<div class="dt-row"><div class="dt-label">内容</div>ゴールド 約<b>960,000G</b>（Lv50→100分）＋覚醒石一式（覚醒5回分素材相当）</div><div class="dt-row"><div class="dt-label">目安</div>カンストまでの育成を一気に応援するオールインワンパック。</div><div class="dt-row"><div class="dt-label">価格の目安</div>💎1,200＝約1,090円相当</div>`,
+};
+
+function renderGoldProducts() {
+  const grid = document.getElementById('grid-goldpack');
+  grid.innerHTML = GOLD_PRODUCTS.map(p => `
+    <div class="shop-card" style="flex-direction:row; align-items:center;">
+      ${p.badge ? `<span class="card-badge ${p.badge.cls}">${p.badge.label}</span>` : ''}
+      <span class="info-btn" onclick="openDetail('${p.title}', GOLD_DETAIL['${p.id}'])">i</span>
+      <div class="card-visual cv-gold" style="width:78px; height:78px; flex:0 0 auto;">${p.icon}</div>
+      <div class="card-body">
+        <div class="card-title">${p.title}</div>
+        <div class="card-desc">${p.desc}</div>
+        <div class="card-price-row">
+          <span class="card-price gem-cost">💎${p.cost.toLocaleString()}</span>
+          <button class="buy-btn" onclick="buyGoldProduct('${p.id}')">交換</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function buyGoldProduct(id) {
+  const p = GOLD_PRODUCTS.find(x => x.id === id);
+  if (GameData.getGem() < p.cost) { toast('💎 ジェムが足りません'); return; }
+  confirmPurchase(
+    p.title,
+    `ゴールド<b>${p.gold.toLocaleString()}G</b>と交換します。<br>消費ジェム：<b style="color:#7fe3ff;">💎${p.cost}</b>`,
+    () => {
+      if (!GameData.spendGem(p.cost)) { toast('💎 ジェムが足りません'); return; }
+      GameData.addGold(p.gold);
+      refreshWallet();
+      toast(`💰 ゴールドを${p.gold.toLocaleString()}G 獲得しました！`);
+    }
+  );
+}
+
+// ==============================================================
+// 4. スタミナ回復
+// ==============================================================
+const STAMINA_PRODUCTS = [
+  { id:'st1',  title:'即時全回復チケット', desc:'使うと現在値に<b>最大値を加算</b>（超過保持あり）', qty:1,  cost:180, badge:null },
+  { id:'st3',  title:'3個セット', desc:'チケット×3（<b>11%お得</b>）', qty:3, cost:480, badge:{cls:'badge-bonus', label:'11%OFF'} },
+  { id:'st10', title:'10個セット', desc:'チケット×10（<b>15%お得</b>）', qty:10, cost:1530, badge:{cls:'badge-best', label:'15%OFF'} },
+];
+const STAMINA_DETAIL = {
+  st1:  `<div class="dt-row"><div class="dt-label">効果</div>使用した瞬間のスタミナ現在値に、<b>最大値をそのまま加算</b>します（例：最大100・現在99→使用後199。超過分もそのまま保持され、自然回復や消費で減るまで残ります）。</div><div class="dt-row"><div class="dt-label">価格の目安</div>💎180＝約160円相当（単品）</div>`,
+  st3:  `<div class="dt-row"><div class="dt-label">内容</div>即時全回復チケット×<b>3個</b>（単品換算180×3＝540ジェムのところ480ジェムで交換可能）</div><div class="dt-row"><div class="dt-label">価格の目安</div>💎480＝約440円相当</div>`,
+  st10: `<div class="dt-row"><div class="dt-label">内容</div>即時全回復チケット×<b>10個</b>（単品換算180×10＝1,800ジェムのところ1,530ジェムで交換可能）</div><div class="dt-row"><div class="dt-label">価格の目安</div>💎1,530＝約1,390円相当</div>`,
+};
+
+function renderStaminaProducts() {
+  const grid = document.getElementById('grid-stamina');
+  grid.innerHTML = STAMINA_PRODUCTS.map(p => `
+    <div class="shop-card">
+      ${p.badge ? `<span class="card-badge ${p.badge.cls}">${p.badge.label}</span>` : ''}
+      <span class="info-btn" onclick="openDetail('${p.title}', STAMINA_DETAIL['${p.id}'])">i</span>
+      <div class="card-visual cv-stam">⚡</div>
+      <div class="card-body">
+        <div class="card-title">${p.title}</div>
+        <div class="card-desc">${p.desc}</div>
+        <div class="card-price-row">
+          <span class="card-price gem-cost">💎${p.cost.toLocaleString()}</span>
+          <button class="buy-btn" onclick="buyStaminaProduct('${p.id}')">交換</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function buyStaminaProduct(id) {
+  const p = STAMINA_PRODUCTS.find(x => x.id === id);
+  if (GameData.getGem() < p.cost) { toast('💎 ジェムが足りません'); return; }
+  confirmPurchase(
+    p.title,
+    `即時全回復チケット×<b>${p.qty}</b>と交換します。<br>消費ジェム：<b style="color:#7fe3ff;">💎${p.cost}</b>`,
+    () => {
+      if (!GameData.spendGem(p.cost)) { toast('💎 ジェムが足りません'); return; }
+      GameData.addStaminaTicket(p.qty);
+      refreshWallet();
+      toast(`⚡ 全回復チケットを${p.qty}個 獲得しました！`);
+    }
+  );
+}
+
+function useTicket() {
+  if (GameData.useStaminaTicket()) {
+    refreshWallet();
+    toast('⚡ スタミナを全回復しました！');
+  } else {
+    toast('チケットを所持していません');
+  }
+}
+
+// 広告視聴（1日3回まで、+30固定）
+const AD_KEY = 'kaseki_ad_watch';
+function getAdState() {
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const s = JSON.parse(localStorage.getItem(AD_KEY) || '{}');
+    if (s.date !== today) return { date: today, count: 0 };
+    return s;
+  } catch (e) { return { date: today, count: 0 }; }
+}
+function saveAdState(s) { localStorage.setItem(AD_KEY, JSON.stringify(s)); }
+function refreshAdUI() {
+  const s = getAdState();
+  const remain = Math.max(0, 3 - s.count);
+  document.getElementById('ad-remain').textContent = remain;
+  document.getElementById('ad-btn').disabled = remain <= 0;
+}
+function watchAd() {
+  const s = getAdState();
+  if (s.count >= 3) { toast('本日の視聴回数上限です'); return; }
+  s.count += 1;
+  saveAdState(s);
+  const cur = GameData.getStamina();
+  const max = GameData.getMaxStamina(GameData.getPlayerLevel());
+  const next = Math.min(max, cur + 30);
+  // GameDataにsetStaminaの公開APIがないため、consumeStaminaの逆操作としてスタミナ差分を直接加算
+  const delta = next - cur;
+  if (delta > 0) {
+    // マイナス消費でスタミナを増やす簡易実装
+    GameData.consumeStamina(-delta);
+  }
+  refreshAdUI();
+  refreshWallet();
+  toast(`📺 広告視聴でスタミナ+${delta} 回復しました！`);
+}
+
+// ==============================================================
+// 5. 月額パス
+// ==============================================================
+function refreshPassStatus() {
+  const active = GameData.isMonthlyPassActive();
+  const cta = document.getElementById('pass-cta');
+  const statusEl = document.getElementById('pass-status');
+  if (!active) {
+    cta.textContent = '加入する';
+    cta.disabled = false;
+    statusEl.innerHTML = '';
+    return;
+  }
+  const info = GameData.getPassInfo();
+  const daysLeft = Math.max(0, Math.ceil((info.expiresAt - Date.now()) / (24*60*60*1000)));
+  const canClaim = GameData.canClaimMonthlyPassToday();
+  cta.textContent = canClaim ? '本日の特典を受け取る' : '本日は受け取り済み';
+  cta.disabled = !canClaim;
+  statusEl.innerHTML = `月額パス <b>加入中</b>（残り${daysLeft}日）`;
+}
+
+function onPassCta() {
+  if (!GameData.isMonthlyPassActive()) {
+    confirmPurchase(
+      '月額パスに加入',
+      `480円/月 で加入します。加入中は毎日ログインで<br>⚡チケット×1・💎ジェム×10・💰3,000Gを受け取れます。<br><br>
+       <span style="font-size:10px;color:#7a6c56;">※現在はテスト用ボタンです。実際の決済（ストア課金）は未実装のため、実際の請求は発生しません。</span>`,
+      () => {
+        GameData.activateMonthlyPass();
+        GameData.addSpentYen(480);
+        refreshWallet();
+        toast('👑 月額パスに加入しました！');
+      }
+    );
+  } else if (GameData.canClaimMonthlyPassToday()) {
+    const r = GameData.claimMonthlyPassDaily();
+    if (r.ok) {
+      refreshWallet();
+      toast(`👑 本日の特典（⚡×${r.staminaTicket} 💎×${r.gem} 💰${r.gold.toLocaleString()}G）を受け取りました！`);
+    }
+  }
+}
+
+// ==============================================================
+// 初期化
+// ==============================================================
+renderGemPacks();
+renderRockProducts();
+renderGoldProducts();
+renderStaminaProducts();
+refreshAdUI();
+refreshWallet();
+</script>
+</body>
+</html>
