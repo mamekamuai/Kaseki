@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>化石対戦</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background:#2b2118; color:#e9dfce; min-height:100dvh;
+    font-family:'Courier New', monospace;
+    display:flex; justify-content:center;
+  }
+  #wrap {
+    width:100%; max-width:420px; min-height:100dvh;
+    display:flex; flex-direction:column;
+    background:radial-gradient(ellipse at 50% 30%, #2a2418 0%, #1a1410 70%);
+  }
+  header {
+    padding:56px 20px 28px;
+    text-align:center;
+  }
+  #logo-rock { font-size:56px; }
+  h1 {
+    font-size:26px; letter-spacing:4px; color:#f0d080;
+    margin-top:10px;
+    text-shadow:0 2px 8px rgba(240,208,128,0.35);
+  }
+  #catch { font-size:11px; color:#8a7c64; margin-top:6px; letter-spacing:2px; }
+
+  #status-strip {
+    margin:0 20px 10px;
+    padding:10px 16px;
+    background:#332a1e;
+    border:1px solid #3a3026;
+    border-radius:10px;
+    display:flex; justify-content:space-around;
+    font-size:12px; font-weight:bold;
+  }
+  #status-strip span { color:#f0d080; }
+
+  #ss-stamina-timer {
+    margin:0 20px 10px; font-size:10.5px; color:#7fd8ff; text-align:center;
+  }
+
+  #spent-yen-note {
+    margin:0 20px 20px; padding:6px 12px; border-radius:8px;
+    background:#2a1810; border:1px dashed #6a3a2a;
+    font-size:10px; color:#e0a888; text-align:center;
+  }
+  #spent-yen-note span { color:#ffb870; font-weight:bold; }
+
+  #menu {
+    flex:1;
+    display:flex; flex-direction:column;
+    gap:14px;
+    padding:0 24px;
+  }
+  .menu-btn {
+    display:flex; align-items:center; gap:14px;
+    padding:16px 20px;
+    border-radius:14px;
+    border:1px solid #4a3e2a;
+    background:#332a1e;
+    color:#e9dfce;
+    text-decoration:none;
+    font-size:15px; font-weight:bold; letter-spacing:2px;
+    transition:transform 0.1s;
+  }
+  .menu-btn:active { transform:scale(0.97); }
+  .menu-icon { font-size:26px; width:34px; text-align:center; }
+  .menu-desc { display:block; font-size:10px; font-weight:normal; color:#8a7c64; letter-spacing:1px; margin-top:2px; }
+
+  #btn-dig    { border-color:#c89858; }
+  #btn-form   { border-color:#4dc8ff; }
+  #btn-strengthen { border-color:#c896ff; }
+  #btn-battle { background:linear-gradient(180deg,#6a3e1e,#4a2a12); border-color:#f0a840; }
+  #btn-shop   { border-color:#7fe3ff; }
+
+  footer {
+    padding:20px; text-align:center;
+    font-size:10px; color:#5a5040; letter-spacing:1px;
+  }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <header>
+    <div id="logo-rock">🦴🪨</div>
+    <h1>化石対戦</h1>
+    <div id="catch">発掘して、育てて、バトルせよ</div>
+  </header>
+
+  <div id="status-strip">
+    <span id="ss-gem">💎-</span>
+    <span id="ss-gold">💰-G</span>
+    <span id="ss-stamina">⚡-/-</span>
+    <span id="ss-lv">プレイヤーLv-</span>
+  </div>
+  <div id="ss-stamina-timer"></div>
+  <div id="spent-yen-note">🧪 テストプレイ用：累計課金額 <span id="ss-spent-yen">0</span>円</div>
+
+  <div id="menu">
+    <a class="menu-btn" id="btn-dig" href="fossil-dig.html">
+      <span class="menu-icon">⛏️</span>
+      <span>発掘<span class="menu-desc">岩を割ってキャラを手に入れる</span></span>
+    </a>
+    <a class="menu-btn" id="btn-form" href="formation.html">
+      <span class="menu-icon">⚙️</span>
+      <span>編成<span class="menu-desc">パーティを組む</span></span>
+    </a>
+    <a class="menu-btn" id="btn-strengthen" href="strengthen.html">
+      <span class="menu-icon">💪</span>
+      <span>強化・覚醒<span class="menu-desc">キャラを鍛える</span></span>
+    </a>
+    <a class="menu-btn" id="btn-battle" href="auto-battle.html">
+      <span class="menu-icon">⚔️</span>
+      <span>バトル<span class="menu-desc">クエスト・ダンジョン・対人戦</span></span>
+    </a>
+    <a class="menu-btn" id="btn-shop" href="shop.html">
+      <span class="menu-icon">💎</span>
+      <span>ショップ<span class="menu-desc">ジェム・岩・回復アイテムを購入</span></span>
+    </a>
+  </div>
+
+  <footer>豆かむ - 化石対戦 β</footer>
+</div>
+
+<script>
+  // GameDataモジュールは各画面に個別実装されているため、
+  // ここではlocalStorageから直接ざっくり読むだけの簡易表示にする
+  function safeInt(key, fallback) {
+    const v = parseInt(localStorage.getItem(key), 10);
+    return Number.isFinite(v) ? v : fallback;
+  }
+  document.getElementById('ss-gem').textContent = `💎${safeInt('kaseki_gem', 0)}`;
+  document.getElementById('ss-gold').textContent = `💰${safeInt('kaseki_gold', 500)}G`;
+  document.getElementById('ss-spent-yen').textContent = safeInt('kaseki_spent_yen', 0).toLocaleString();
+  const playerLevel = safeInt('kaseki_player_level', 1);
+  const stamina = safeInt('kaseki_stamina', 20);
+  // スタミナ上限はauto-battle.html側のロジック(Lv1:20〜Lv100:300の均等割り)に合わせる
+  const maxStamina = Math.min(300, Math.round(20 + (Math.min(100, playerLevel) - 1) * ((300 - 20) / 99)));
+  document.getElementById('ss-stamina').textContent = `⚡${Math.min(stamina, maxStamina)}/${maxStamina}`;
+  document.getElementById('ss-lv').textContent = `プレイヤーLv${playerLevel}`;
+
+  // スタミナ回復までの残り時間表示（5分で1回復。auto-battle.html側のSTAMINA_REGEN_MSと合わせる）
+  const STAMINA_REGEN_MS = 5 * 60 * 1000;
+  function updateStaminaTimer() {
+    const cur = safeInt('kaseki_stamina', 20);
+    const el = document.getElementById('ss-stamina-timer');
+    if (cur >= maxStamina) { el.textContent = '⚡スタミナ満タン'; return; }
+    const ts = safeInt('kaseki_stamina_ts', Date.now());
+    const remain = Math.max(0, STAMINA_REGEN_MS - (Date.now() - ts));
+    const m = Math.floor(remain / 60000);
+    const s = Math.floor((remain % 60000) / 1000);
+    el.textContent = `次のスタミナ回復まで ${m}:${String(s).padStart(2, '0')}`;
+  }
+  updateStaminaTimer();
+  setInterval(updateStaminaTimer, 1000);
+</script>
+</body>
+</html>
